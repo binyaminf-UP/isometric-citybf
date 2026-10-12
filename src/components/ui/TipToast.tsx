@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { X, Lightbulb, SkipForward, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { T, useGT, useMessages } from 'gt-next';
+import { T, useGT, useMessages } from '@/i18n';
 
 export interface TipToastProps {
   message: string;
@@ -93,10 +93,8 @@ function TipToastContent({ message, isVisible, onContinue, onSkipAll }: TipToast
             onClick={onSkipAll}
             className="text-xs text-muted-foreground hover:text-foreground gap-1"
           >
-            <T>
-              <SkipForward className="w-3.5 h-3.5" />
-              Skip All Tips
-            </T>
+            <SkipForward className="w-3.5 h-3.5" />
+            <T>Skip All Tips</T>
           </Button>
           <Button
             variant="default"
@@ -104,10 +102,8 @@ function TipToastContent({ message, isVisible, onContinue, onSkipAll }: TipToast
             onClick={onContinue}
             className="text-xs gap-1"
           >
-            <T>
-              Continue
-              <ArrowRight className="w-3.5 h-3.5" />
-            </T>
+            <T>Continue</T>
+            <ArrowRight className="w-3.5 h-3.5 -scale-x-100" />
           </Button>
         </div>
         

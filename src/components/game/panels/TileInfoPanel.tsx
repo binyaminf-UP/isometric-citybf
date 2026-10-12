@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { CloseIcon } from '@/components/ui/Icons';
 import { useGame } from '@/context/GameContext';
+import { translate as tr } from '@/i18n';
 import { 
   SERVICE_CONFIG, 
   SERVICE_BUILDING_TYPES,
@@ -98,7 +99,7 @@ export function TileInfoPanel({
       onClick={handleCardClick}
     >
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
-        <CardTitle className="text-sm font-sans">Tile ({x}, {y})</CardTitle>
+        <CardTitle className="text-sm font-sans">{tr('Tile ({x}, {y})', { x, y })}</CardTitle>
         <Button variant="ghost" size="icon-sm" onClick={onClose}>
           <CloseIcon size={14} />
         </Button>
@@ -106,11 +107,11 @@ export function TileInfoPanel({
       
       <CardContent className="space-y-3 text-sm">
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Building</span>
-          <span className="capitalize">{tile.building.type.replace(/_/g, ' ')}</span>
+          <span className="text-muted-foreground">{tr('Building')}</span>
+          <span className="capitalize">{tr(tile.building.type.replace(/_/g, ' '))}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Zone</span>
+          <span className="text-muted-foreground">{tr('Zone')}</span>
           <Badge variant={
             tile.zone === 'residential' ? 'default' :
             tile.zone === 'commercial' ? 'secondary' :
@@ -120,42 +121,42 @@ export function TileInfoPanel({
             tile.zone === 'commercial' ? 'bg-blue-500/20 text-blue-400' :
             tile.zone === 'industrial' ? 'bg-amber-500/20 text-amber-400' : ''
           }>
-            {tile.zone === 'none' ? 'Unzoned' : tile.zone}
+            {tile.zone === 'none' ? tr('Unzoned') : tr(tile.zone)}
           </Badge>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Level</span>
+          <span className="text-muted-foreground">{tr('Level')}</span>
           <span>{tile.building.level}/5</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Population</span>
+          <span className="text-muted-foreground">{tr('Population')}</span>
           <span>{tile.building.population}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Jobs</span>
+          <span className="text-muted-foreground">{tr('Jobs')}</span>
           <span>{tile.building.jobs}</span>
         </div>
         
         <Separator />
         
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Power</span>
+          <span className="text-muted-foreground">{tr('Power')}</span>
           <Badge variant={tile.building.powered ? 'default' : 'destructive'}>
-            {tile.building.powered ? 'Connected' : 'No Power'}
+            {tile.building.powered ? tr('Connected') : tr('No Power')}
           </Badge>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Water</span>
+          <span className="text-muted-foreground">{tr('Water')}</span>
           <Badge variant={tile.building.watered ? 'default' : 'destructive'} className={tile.building.watered ? 'bg-cyan-500/20 text-cyan-400' : ''}>
-            {tile.building.watered ? 'Connected' : 'No Water'}
+            {tile.building.watered ? tr('Connected') : tr('No Water')}
           </Badge>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Land Value</span>
+          <span className="text-muted-foreground">{tr('Land Value')}</span>
           <span>${tile.landValue}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Pollution</span>
+          <span className="text-muted-foreground">{tr('Pollution')}</span>
           <span className={tile.pollution > 50 ? 'text-red-400' : tile.pollution > 25 ? 'text-amber-400' : 'text-green-400'}>
             {Math.round(tile.pollution)}%
           </span>
@@ -165,30 +166,30 @@ export function TileInfoPanel({
           <>
             <Separator />
             <div className="flex justify-between text-red-400">
-              <span>ON FIRE!</span>
-              <span>{Math.round(tile.building.fireProgress)}% damage</span>
+              <span>{tr('ON FIRE!')}</span>
+              <span>{tr('{pct}% damage', { pct: Math.round(tile.building.fireProgress) })}</span>
             </div>
           </>
         )}
         
         <Separator />
-        <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Service Coverage</div>
+        <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">{tr('Service Coverage')}</div>
         
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Police</span>
+            <span className="text-muted-foreground">{tr('Police')}</span>
             <span>{Math.round(services.police[y][x])}%</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Fire</span>
+            <span className="text-muted-foreground">{tr('Fire')}</span>
             <span>{Math.round(services.fire[y][x])}%</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Health</span>
+            <span className="text-muted-foreground">{tr('Health')}</span>
             <span>{Math.round(services.health[y][x])}%</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Education</span>
+            <span className="text-muted-foreground">{tr('Education')}</span>
             <span>{Math.round(services.education[y][x])}%</span>
           </div>
         </div>
@@ -196,16 +197,16 @@ export function TileInfoPanel({
         {upgradeInfo && (
           <>
             <Separator />
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Upgrade</div>
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">{tr('Upgrade')}</div>
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
-                <span className="text-muted-foreground">Coverage Range</span>
+                <span className="text-muted-foreground">{tr('Coverage Range')}</span>
                 <span className="font-mono">
-                  {upgradeInfo.currentEffectiveRange} → {upgradeInfo.nextEffectiveRange} tiles
+                  {tr('{from} → {to} tiles', { from: upgradeInfo.currentEffectiveRange, to: upgradeInfo.nextEffectiveRange })}
                 </span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-muted-foreground">Upgrade Cost</span>
+                <span className="text-muted-foreground">{tr('Upgrade Cost')}</span>
                 <span className={`font-mono ${upgradeInfo.canAfford ? 'text-foreground' : 'text-red-400'}`}>
                   ${upgradeInfo.cost.toLocaleString()}
                 </span>
@@ -217,21 +218,21 @@ export function TileInfoPanel({
                 className="w-full"
                 size="sm"
               >
-                Upgrade to Level {upgradeInfo.currentLevel + 1}
+                {tr('Upgrade to Level {level}', { level: upgradeInfo.currentLevel + 1 })}
               </Button>
               {!upgradeInfo.canAfford && (
                 <p className="text-xs text-muted-foreground text-center">
-                  Insufficient funds
+                  {tr('Insufficient funds')}
                 </p>
               )}
               {upgradeInfo.isUnderConstruction && (
                 <p className="text-xs text-muted-foreground text-center">
-                  Building under construction
+                  {tr('Building under construction')}
                 </p>
               )}
               {upgradeInfo.isAbandoned && (
                 <p className="text-xs text-muted-foreground text-center">
-                  Building is abandoned
+                  {tr('Building is abandoned')}
                 </p>
               )}
             </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { msg, useMessages } from 'gt-next';
+import { msg, useMessages } from '@/i18n';
 import { useGame } from '@/context/GameContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';

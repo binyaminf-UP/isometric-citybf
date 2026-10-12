@@ -3,16 +3,14 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { GameProvider } from '@/context/GameContext';
-import { MultiplayerContextProvider } from '@/context/MultiplayerContext';
 import Game from '@/components/Game';
-import { CoopModal } from '@/components/multiplayer/CoopModal';
 import { useMobile } from '@/hooks/useMobile';
 import { getSpritePack, getSpriteCoords, DEFAULT_SPRITE_PACK_ID } from '@/lib/renderConfig';
 import { SavedCityMeta, GameState } from '@/types/game';
 import { decompressFromUTF16, compressToUTF16 } from 'lz-string';
-import { LanguageSelector } from '@/components/ui/LanguageSelector';
-import { T } from 'gt-next';
-import { Users, X } from 'lucide-react';
+import { T } from '@/i18n';
+import { X } from 'lucide-react';
+import { APP_NAME } from '@/lib/appInfo';
 
 const STORAGE_KEY = 'isocity-game-state';
 const SAVED_CITIES_INDEX_KEY = 'isocity-saved-cities-index';
@@ -110,47 +108,6 @@ function loadSavedCities(): SavedCityMeta[] {
     return [];
   }
   return [];
-}
-
-// Save a city to the saved cities index (for multiplayer cities)
-function saveCityToIndex(state: GameState, roomCode?: string): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const cities = loadSavedCities();
-    
-    // Create city meta
-    const cityMeta: SavedCityMeta = {
-      id: state.id || `city-${Date.now()}`,
-      cityName: state.cityName || 'Co-op City',
-      population: state.stats.population,
-      money: state.stats.money,
-      year: state.year,
-      month: state.month,
-      gridSize: state.gridSize,
-      savedAt: Date.now(),
-      roomCode: roomCode,
-    };
-    
-    // Check if city already exists (by id or roomCode)
-    const existingIndex = cities.findIndex(c => 
-      c.id === cityMeta.id || (roomCode && c.roomCode === roomCode)
-    );
-    
-    if (existingIndex >= 0) {
-      // Update existing entry
-      cities[existingIndex] = cityMeta;
-    } else {
-      // Add new entry at the beginning
-      cities.unshift(cityMeta);
-    }
-    
-    // Keep only the last 20 cities
-    const trimmed = cities.slice(0, 20);
-    
-    localStorage.setItem(SAVED_CITIES_INDEX_KEY, JSON.stringify(trimmed));
-  } catch (e) {
-    console.error('Failed to save city to index:', e);
-  }
 }
 
 // Sprite Gallery component that renders sprites using canvas (like SpriteTestPanel)
@@ -286,16 +243,10 @@ function SavedCityCard({ city, onLoad, onDelete }: { city: SavedCityMeta; onLoad
           <h3 className="text-white font-medium truncate group-hover:text-white/90 text-sm flex-1">
             {city.cityName}
           </h3>
-          {city.roomCode && (
-            <span className="text-xs px-1.5 py-0.5 bg-blue-500/20 text-blue-300 rounded shrink-0">
-              Co-op
-            </span>
-          )}
         </div>
         <div className="flex items-center gap-3 mt-1 text-xs text-white/50">
-          <span>Pop: {city.population.toLocaleString()}</span>
+          <span><T>Pop</T>: {city.population.toLocaleString()}</span>
           <span>${city.money.toLocaleString()}</span>
-          {city.roomCode && <span className="text-blue-400/60">{city.roomCode}</span>}
         </div>
       </button>
       {onDelete && (
@@ -305,7 +256,7 @@ function SavedCityCard({ city, onLoad, onDelete }: { city: SavedCityMeta; onLoad
             onDelete();
           }}
           className="absolute top-1/2 -translate-y-1/2 right-1.5 p-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-red-500/20 text-white/40 hover:text-red-400 rounded transition-all duration-200"
-          title="Delete city"
+          title="מחיקת עיר"
         >
           <X className="w-3.5 h-3.5" />
         </button>
@@ -321,10 +272,6 @@ export default function HomePage() {
   const [isChecking, setIsChecking] = useState(true);
   const [savedCities, setSavedCities] = useState<SavedCityMeta[]>([]);
   const [hasSaved, setHasSaved] = useState(false);
-  const [showCoopModal, setShowCoopModal] = useState(false);
-  const [isMultiplayer, setIsMultiplayer] = useState(false);
-  const [startFreshGame, setStartFreshGame] = useState(false);
-  const [pendingRoomCode, setPendingRoomCode] = useState<string | null>(null);
   const { isMobileDevice, isSmallScreen } = useMobile();
   const isMobile = isMobileDevice || isSmallScreen;
 
@@ -335,14 +282,6 @@ export default function HomePage() {
       setSavedCities(loadSavedCities());
       setHasSaved(hasSavedGame());
       
-      // Check for room code in URL (legacy format) - redirect to new format
-      const params = new URLSearchParams(window.location.search);
-      const roomCode = params.get('room');
-      if (roomCode && roomCode.length === 5) {
-        // Redirect to new /coop/XXXXX format
-        window.location.replace(`/coop/${roomCode.toUpperCase()}`);
-        return;
-      }
       // Always show landing page - don't auto-load into game
       // User can select from saved cities or start new
     };
@@ -353,25 +292,13 @@ export default function HomePage() {
   // Handle exit from game - refresh saved cities list
   const handleExitGame = () => {
     setShowGame(false);
-    setIsMultiplayer(false);
-    setStartFreshGame(false);
     setSavedCities(loadSavedCities());
     setHasSaved(hasSavedGame());
-    // Clear room code from URL
-    window.history.replaceState({}, '', '/');
   };
 
   // Load a saved city
   const loadSavedCity = (city: SavedCityMeta) => {
-    // If it's a multiplayer city, navigate to the room
-    if (city.roomCode) {
-      window.history.replaceState({}, '', `/coop/${city.roomCode}`);
-      setPendingRoomCode(city.roomCode);
-      setShowCoopModal(true);
-      return;
-    }
-    
-    // Otherwise load from local storage
+    // Load from local storage
     try {
       const saved = localStorage.getItem(SAVED_CITY_PREFIX + city.id);
       if (saved) {
@@ -392,55 +319,10 @@ export default function HomePage() {
       setSavedCities(updatedCities);
       
       // Also remove the city state data if it exists
-      if (!city.roomCode) {
-        localStorage.removeItem(SAVED_CITY_PREFIX + city.id);
-      }
+      localStorage.removeItem(SAVED_CITY_PREFIX + city.id);
     } catch {
       console.error('Failed to delete saved city');
     }
-  };
-
-  // Handle co-op game start
-  const handleCoopStart = (isHost: boolean, initialState?: GameState, roomCode?: string) => {
-    setIsMultiplayer(true);
-    
-    if (isHost && initialState) {
-      // Host starts with the state they created - save it so GameProvider loads it
-      try {
-        const compressed = compressToUTF16(JSON.stringify(initialState));
-        localStorage.setItem(STORAGE_KEY, compressed);
-        
-        // Also save to saved cities index so it appears on homepage
-        if (roomCode) {
-          saveCityToIndex(initialState, roomCode);
-        }
-      } catch (e) {
-        console.error('Failed to save co-op state:', e);
-      }
-      setStartFreshGame(false);
-    } else if (isHost) {
-      // Host without state - fallback to fresh game
-      setStartFreshGame(true);
-    } else if (initialState) {
-      // Guest received state from host - save it so GameProvider loads it
-      try {
-        const compressed = compressToUTF16(JSON.stringify(initialState));
-        localStorage.setItem(STORAGE_KEY, compressed);
-        
-        // Also save to saved cities index so it appears on homepage
-        if (roomCode) {
-          saveCityToIndex(initialState, roomCode);
-        }
-      } catch (e) {
-        console.error('Failed to save co-op state:', e);
-      }
-      setStartFreshGame(false);
-    } else {
-      // Guest without state - fallback to fresh game
-      setStartFreshGame(true);
-    }
-    
-    setShowGame(true);
   };
 
   if (isChecking) {
@@ -458,27 +340,23 @@ export default function HomePage() {
       </main>
     );
 
-    // Always wrap in MultiplayerContextProvider so players can invite others from within the game
     return (
-      <MultiplayerContextProvider>
-        <GameProvider startFresh={startFreshGame}>
-          {gameContent}
-        </GameProvider>
-      </MultiplayerContextProvider>
+      <GameProvider>
+        {gameContent}
+      </GameProvider>
     );
   }
 
   // Mobile landing page
   if (isMobile) {
     return (
-      <MultiplayerContextProvider>
         <main className="h-[100dvh] max-h-[100dvh] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col items-center px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] overflow-y-auto">
           {/* Spacer to push content down slightly from top */}
           <div className="flex-shrink-0 h-4 sm:h-8" />
           
           {/* Title - smaller on very small screens */}
           <h1 className="text-4xl sm:text-5xl font-light tracking-wider text-white/90 mb-4 sm:mb-6 flex-shrink-0">
-            IsoCity
+            {APP_NAME}
           </h1>
           
           {/* Sprite Gallery - smaller on mobile, contained */}
@@ -496,20 +374,7 @@ export default function HomePage() {
             </Button>
 
             <Button
-              onClick={() => setShowCoopModal(true)}
-              variant="outline"
-              className="w-full py-4 sm:py-6 text-lg sm:text-xl font-light tracking-wide bg-white/5 hover:bg-white/15 text-white/60 hover:text-white border border-white/15 rounded-none transition-all duration-300"
-            >
-              <T>Co-op</T>
-            </Button>
-
-            <Button
               onClick={async () => {
-                // Clear any room code from URL to prevent multiplayer conflicts
-                if (window.location.search.includes('room=')) {
-                  window.history.replaceState({}, '', '/');
-                  setPendingRoomCode(null);
-                }
                 const response = await fetch('/example-states/example_state_9.json');
                 const exampleState = await response.json();
                 try {
@@ -525,27 +390,6 @@ export default function HomePage() {
             >
               <T>Load Example</T>
             </Button>
-            <div className="flex items-start justify-between w-full">
-              <div className="flex flex-col">
-                <a
-                  href="https://cursor.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-left py-2 text-sm font-light tracking-wide text-white/40 hover:text-white/70 transition-colors duration-200"
-                >
-                  <T>Made with Cursor</T>
-                </a>
-                <a
-                  href="https://github.com/amilich/isometric-city"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-left py-2 text-sm font-light tracking-wide text-white/40 hover:text-white/70 transition-colors duration-200"
-                >
-                  <T>Open GitHub</T>
-                </a>
-              </div>
-              <LanguageSelector variant="ghost" className="text-white/40 hover:text-white/70 hover:bg-white/10" />
-            </div>
           </div>
           
           {/* Saved Cities - scrollable area takes remaining space */}
@@ -572,29 +416,20 @@ export default function HomePage() {
           
           {/* Bottom spacer */}
           <div className="flex-shrink-0 h-2" />
-          
-          {/* Co-op Modal */}
-          <CoopModal
-            open={showCoopModal}
-            onOpenChange={setShowCoopModal}
-            onStartGame={handleCoopStart}
-            pendingRoomCode={pendingRoomCode}
-          />
         </main>
-      </MultiplayerContextProvider>
     );
   }
 
   // Desktop landing page
   return (
-    <MultiplayerContextProvider>
+    <>
       <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-8">
         <div className="max-w-7xl w-full grid lg:grid-cols-2 gap-16 items-center">
           
           {/* Left - Title and Start Button */}
           <div className="flex flex-col items-center lg:items-start justify-center space-y-12">
             <h1 className="text-8xl font-light tracking-wider text-white/90">
-              IsoCity
+              {APP_NAME}
             </h1>
             <div className="flex flex-col gap-3">
               <Button 
@@ -604,19 +439,7 @@ export default function HomePage() {
                 {hasSaved ? <T>Continue</T> : <T>New Game</T>}
               </Button>
               <Button
-                onClick={() => setShowCoopModal(true)}
-                variant="outline"
-                className="w-64 py-8 text-2xl font-light tracking-wide bg-white/5 hover:bg-white/15 text-white/60 hover:text-white border border-white/15 rounded-none transition-all duration-300"
-              >
-                <T>Co-op</T>
-              </Button>
-              <Button
                 onClick={async () => {
-                  // Clear any room code from URL to prevent multiplayer conflicts
-                  if (window.location.search.includes('room=')) {
-                    window.history.replaceState({}, '', '/');
-                    setPendingRoomCode(null);
-                  }
                   const response = await fetch('/example-states/example_state_9.json');
                   const exampleState = await response.json();
                   try {
@@ -632,27 +455,6 @@ export default function HomePage() {
               >
                 <T>Load Example</T>
               </Button>
-              <div className="flex items-start justify-between w-64">
-                <div className="flex flex-col">
-                  <a
-                    href="https://cursor.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-left py-2 text-sm font-light tracking-wide text-white/40 hover:text-white/70 transition-colors duration-200"
-                  >
-                    <T>Made with Cursor</T>
-                  </a>
-                  <a
-                    href="https://github.com/amilich/isometric-city"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-left py-2 text-sm font-light tracking-wide text-white/40 hover:text-white/70 transition-colors duration-200"
-                  >
-                    <T>Open GitHub</T>
-                  </a>
-                </div>
-                <LanguageSelector variant="ghost" className="text-white/40 hover:text-white/70 hover:bg-white/10" />
-              </div>
             </div>
             
             {/* Saved Cities */}
@@ -683,15 +485,7 @@ export default function HomePage() {
             <SpriteGallery count={16} />
           </div>
         </div>
-        
-        {/* Co-op Modal */}
-        <CoopModal
-          open={showCoopModal}
-          onOpenChange={setShowCoopModal}
-          onStartGame={handleCoopStart}
-          pendingRoomCode={pendingRoomCode}
-        />
       </main>
-    </MultiplayerContextProvider>
+    </>
   );
 }

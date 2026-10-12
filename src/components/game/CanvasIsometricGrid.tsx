@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
-import { useMessages, T, Var, useGT } from 'gt-next';
+import { useMessages, useGT } from '@/i18n';
 import { useGame } from '@/context/GameContext';
 import { TOOL_INFO, Tile, Building, BuildingType, AdjacentCity, Tool } from '@/types/game';
 import { getBuildingSize, requiresWaterAdjacency, getWaterAdjacency } from '@/lib/simulation';
@@ -3115,28 +3115,21 @@ export function CanvasIsometricGrid({ overlayMode, selectedTile, setSelectedTile
               onMouseDown={(e) => e.stopPropagation()}
             >
               <DialogHeader>
-                <T>
-                  <DialogTitle>City Discovered!</DialogTitle>
-                </T>
-                <T>
-                  <DialogDescription>
-                    Your road has reached the <Var>{cityConnectionDialog.direction}</Var> border! You&apos;ve discovered <Var>{city.name}</Var>.
-                  </DialogDescription>
-                </T>
+                <DialogTitle>גילית עיר!</DialogTitle>
+                <DialogDescription>
+                  הכביש שלך הגיע לגבול ה{{ north: 'צפוני', south: 'דרומי', east: 'מזרחי', west: 'מערבי' }[cityConnectionDialog.direction]}! גילית את {city.name}.
+                </DialogDescription>
               </DialogHeader>
               <div className="flex flex-col gap-4 mt-4">
-                <T>
-                  <div className="text-sm text-muted-foreground">
-                    Connecting to <Var>{city.name}</Var> will establish a trade route, providing:
-                    <ul className="mt-2 space-y-1 list-disc list-inside">
-                      <li>$5,000 one-time bonus</li>
-                      <li>$200/month additional income</li>
-                    </ul>
-                  </div>
-                </T>
+                <div className="text-sm text-muted-foreground">
+                  החיבור ל{city.name} יפתח נתיב מסחר ויעניק:
+                  <ul className="mt-2 space-y-1 list-disc list-inside">
+                    <li>$5,000 מענק חד-פעמי</li>
+                    <li>$200 בחודש הכנסה נוספת</li>
+                  </ul>
+                </div>
                 <div className="flex gap-2 justify-end">
-                  <T>
-                    <Button
+                  <Button
                       variant="outline"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -3145,10 +3138,8 @@ export function CanvasIsometricGrid({ overlayMode, selectedTile, setSelectedTile
                         setDragEndTile(null);
                       }}
                     >
-                      Maybe Later
+                      אולי מאוחר יותר
                     </Button>
-                  </T>
-                  <T>
                     <Button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -3158,9 +3149,8 @@ export function CanvasIsometricGrid({ overlayMode, selectedTile, setSelectedTile
                         setDragEndTile(null);
                       }}
                     >
-                      Connect to <Var>{city.name}</Var>
+                      חיבור ל{city.name}
                     </Button>
-                  </T>
                 </div>
               </div>
             </DialogContent>

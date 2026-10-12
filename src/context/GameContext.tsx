@@ -1,6 +1,7 @@
 // Consolidated GameContext for the SimCity-like game
 'use client';
 
+import { APP_NAME } from '@/lib/appInfo';
 import React, { createContext, useCallback, useContext, useEffect, useState, useRef } from 'react';
 import { compressToUTF16, decompressFromUTF16 } from 'lz-string';
 import { serializeAndCompressAsync } from '@/lib/saveWorkerManager';
@@ -65,10 +66,8 @@ type GameContextValue = {
   setActivePanel: (panel: GameState['activePanel']) => void;
   setBudgetFunding: (key: keyof Budget, funding: number) => void;
   upgradeServiceBuilding: (x: number, y: number) => boolean; // Returns true if upgrade succeeded
-  placeAtTile: (x: number, y: number, isRemote?: boolean) => void;
-  setPlaceCallback: (callback: ((args: { x: number; y: number; tool: Tool }) => void) | null) => void;
-  finishTrackDrag: (pathTiles: { x: number; y: number }[], trackType: 'road' | 'rail', isRemote?: boolean) => void; // Create bridges after road/rail drag
-  setBridgeCallback: (callback: ((args: { pathTiles: { x: number; y: number }[]; trackType: 'road' | 'rail' }) => void) | null) => void;
+  placeAtTile: (x: number, y: number) => void;
+  finishTrackDrag: (pathTiles: { x: number; y: number }[], trackType: 'road' | 'rail') => void; // Create bridges after road/rail drag
   connectToCity: (cityId: string) => void;
   discoverCity: (cityId: string) => void;
   checkAndDiscoverCities: (onDiscover?: (city: { id: string; direction: 'north' | 'south' | 'east' | 'west'; name: string }) => void) => void;
@@ -647,7 +646,7 @@ function deleteCityState(cityId: string): void {
 
 export function GameProvider({ children, startFresh = false }: { children: React.ReactNode; startFresh?: boolean }) {
   // Start with a default state, we'll load from localStorage after mount (unless startFresh is true)
-  const [state, setState] = useState<GameState>(() => createInitialGameState(DEFAULT_GRID_SIZE, 'IsoCity'));
+  const [state, setState] = useState<GameState>(() => createInitialGameState(DEFAULT_GRID_SIZE, APP_NAME));
   
   const [hasExistingGame, setHasExistingGame] = useState(false);
   const [isStateReady, setIsStateReady] = useState(false);
@@ -655,10 +654,6 @@ export function GameProvider({ children, startFresh = false }: { children: React
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const skipNextSaveRef = useRef(false);
   const hasLoadedRef = useRef(false);
-  
-  // Callback for multiplayer action broadcast
-  const placeCallbackRef = useRef<((args: { x: number; y: number; tool: Tool }) => void) | null>(null);
-  const bridgeCallbackRef = useRef<((args: { pathTiles: { x: number; y: number }[]; trackType: 'road' | 'rail' }) => void) | null>(null);
   
   // Sprite pack state
   const [currentSpritePack, setCurrentSpritePack] = useState<SpritePack>(() => getSpritePack(DEFAULT_SPRITE_PACK_ID));
@@ -870,11 +865,7 @@ export function GameProvider({ children, startFresh = false }: { children: React
     [],
   );
 
-  const placeAtTile = useCallback((x: number, y: number, isRemote = false) => {
-    // For multiplayer broadcast, we need to capture the tool synchronously
-    // before React batches the setState. We read from the latest state ref.
-    const currentTool = latestStateRef.current.selectedTool;
-    
+  const placeAtTile = useCallback((x: number, y: number) => {
     setState((prev) => {
       const tool = prev.selectedTool;
       if (tool === 'select') return prev;
@@ -966,12 +957,6 @@ export function GameProvider({ children, startFresh = false }: { children: React
 
       return nextState;
     });
-    
-    // Broadcast to multiplayer if this is a local action (not remote)
-    // We use the tool captured before setState since React 18 batches async
-    if (!isRemote && currentTool !== 'select' && placeCallbackRef.current) {
-      placeCallbackRef.current({ x, y, tool: currentTool });
-    }
   }, []);
 
   const upgradeServiceBuildingHandler = useCallback((x: number, y: number) => {
@@ -988,13 +973,8 @@ export function GameProvider({ children, startFresh = false }: { children: React
   }, []);
 
   // Called after a road/rail drag operation to create bridges for water crossings
-  const finishTrackDrag = useCallback((pathTiles: { x: number; y: number }[], trackType: 'road' | 'rail', isRemote = false) => {
+  const finishTrackDrag = useCallback((pathTiles: { x: number; y: number }[], trackType: 'road' | 'rail') => {
     setState((prev) => createBridgesOnPath(prev, pathTiles, trackType));
-    
-    // Broadcast to multiplayer if this is a local action (not remote)
-    if (!isRemote && bridgeCallbackRef.current) {
-      bridgeCallbackRef.current({ pathTiles, trackType });
-    }
   }, []);
 
   const connectToCity = useCallback((cityId: string) => {
@@ -1097,14 +1077,6 @@ export function GameProvider({ children, startFresh = false }: { children: React
     setState((prev) => ({ ...prev, disastersEnabled: enabled }));
   }, []);
   
-  const setPlaceCallback = useCallback((callback: ((args: { x: number; y: number; tool: Tool }) => void) | null) => {
-    placeCallbackRef.current = callback;
-  }, []);
-
-  const setBridgeCallback = useCallback((callback: ((args: { pathTiles: { x: number; y: number }[]; trackType: 'road' | 'rail' }) => void) | null) => {
-    bridgeCallbackRef.current = callback;
-  }, []);
-
   const setSpritePack = useCallback((packId: string) => {
     const pack = getSpritePack(packId);
     setCurrentSpritePack(pack);
@@ -1127,7 +1099,7 @@ export function GameProvider({ children, startFresh = false }: { children: React
 
   const newGame = useCallback((name?: string, size?: number) => {
     clearGameState(); // Clear saved state when starting fresh
-    const fresh = createInitialGameState(size ?? DEFAULT_GRID_SIZE, name || 'IsoCity');
+    const fresh = createInitialGameState(size ?? DEFAULT_GRID_SIZE, name || APP_NAME);
     // Increment gameVersion from current state to ensure vehicles/entities are cleared
     setState((prev) => ({
       ...fresh,
@@ -1638,9 +1610,7 @@ export function GameProvider({ children, startFresh = false }: { children: React
     setBudgetFunding,
     placeAtTile,
     upgradeServiceBuilding: upgradeServiceBuildingHandler,
-    setPlaceCallback,
     finishTrackDrag,
-    setBridgeCallback,
     connectToCity,
     discoverCity,
     checkAndDiscoverCities,

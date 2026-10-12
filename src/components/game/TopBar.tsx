@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { msg, useMessages } from 'gt-next';
+import { msg, useMessages } from '@/i18n';
 import { useGame } from '@/context/GameContext';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -19,7 +19,6 @@ import {
   CheckIcon,
 } from '@/components/ui/Icons';
 import { copyShareUrl } from '@/lib/shareState';
-import { LanguageSelector } from '@/components/ui/LanguageSelector';
 
 // Translatable UI labels
 const UI_LABELS = {
@@ -269,7 +268,6 @@ export const TopBar = React.memo(function TopBar() {
         
         <Separator orientation="vertical" className="h-8" />
         
-        <LanguageSelector iconOnly={false} variant="ghost" iconSize={14} />
       </div>
     </div>
   );

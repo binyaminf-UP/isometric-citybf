@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { msg, useMessages } from 'gt-next';
+import { msg, useMessages } from '@/i18n';
 import { useGame } from '@/context/GameContext';
 import { Tile } from '@/types/game';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,6 @@ import {
   EnvironmentIcon,
   CloseIcon,
 } from '@/components/ui/Icons';
-import { Users } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -30,7 +29,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { LanguageSelector } from '@/components/ui/LanguageSelector';
 
 // Translatable UI labels
 const UI_LABELS = {
@@ -110,13 +108,11 @@ export function MobileTopBar({
   selectedTile, 
   services, 
   onCloseTile,
-  onShare,
   onExit,
 }: { 
   selectedTile: Tile | null;
   services: { police: number[][]; fire: number[][]; health: number[][]; education: number[][]; power: boolean[][]; water: boolean[][] };
   onCloseTile: () => void;
-  onShare?: () => void;
   onExit?: () => void;
 }) {
   const { state, setSpeed, setTaxRate, visualHour, saveCity } = useGame();
@@ -181,7 +177,7 @@ export function MobileTopBar({
                 className={`h-6 w-6 min-w-6 p-0 m-0 flex items-center justify-center rounded-none ${
                   speed === 0 ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent/20'
                 }`}
-                title="Pause"
+                title="השהיה"
               >
                 <PauseIcon size={12} />
               </button>
@@ -190,7 +186,7 @@ export function MobileTopBar({
                 className={`h-6 w-6 min-w-6 p-0 m-0 flex items-center justify-center rounded-none ${
                   speed === 1 ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent/20'
                 }`}
-                title="Normal speed"
+                title="מהירות רגילה"
               >
                 <PlayIcon size={12} />
               </button>
@@ -221,25 +217,13 @@ export function MobileTopBar({
               </button>
             </div>
 
-            {/* Language selector, Share, and Exit button group */}
+            {/* Exit button group */}
             <div className="flex items-center -space-x-0.5">
-              <LanguageSelector useDrawer iconSize={12} />
-
-              {onShare && (
-                <button
-                  onClick={onShare}
-                  className="h-6 w-4 p-0 m-0 flex items-center justify-center text-muted-foreground hover:text-foreground"
-                  title="Invite Players"
-                >
-                  <Users className="w-3 h-3" />
-                </button>
-              )}
-
               {onExit && (
                 <button
                   onClick={() => setShowExitDialog(true)}
                   className="h-6 w-4 p-0 m-0 flex items-center justify-center text-muted-foreground hover:text-foreground"
-                  title="Exit to Main Menu"
+                  title="יציאה לתפריט הראשי"
                 >
                   <svg 
                     className="w-3 h-3 -scale-x-100" 

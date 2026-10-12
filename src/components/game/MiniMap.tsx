@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
-import { msg } from 'gt-next';
-import { useMessages } from 'gt-next';
+import { msg } from '@/i18n';
+import { useMessages } from '@/i18n';
 import { useGame } from '@/context/GameContext';
 import { Card } from '@/components/ui/card';
 import { TILE_WIDTH, TILE_HEIGHT } from '@/components/game/types';

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { GameState } from '@/types/game';
-import { msg } from 'gt-next';
+import { msg } from '@/i18n';
 
 // Tip definitions with their conditions and messages
 export type TipId = 

@@ -176,7 +176,7 @@
 
 /* Art Deco Typography */
 .font-display {
-  font-family: var(--font-display), Georgia, serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
 }
 
 .font-sans {
