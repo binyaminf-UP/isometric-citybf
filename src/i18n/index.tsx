@@ -3,7 +3,10 @@
 import React from 'react';
 import { he } from './he';
 
-// שכבת תרגום מקומית (מחליפה את gt-next). המשחק בעברית בלבד.
+// שפת הממשק. 'en' = אנגלית (מחרוזות המקור). 'he' מפעיל את המילון ב-he.ts (צריך גם dir="rtl" ב-layout).
+const LANGUAGE: 'en' | 'he' = 'en';
+
+// שכבת תרגום מקומית (מחליפה את gt-next). כרגע הממשק באנגלית.
 // מחרוזות המקור נשארות באנגלית בקוד, והמילון ב-he.ts מתרגם אותן.
 
 function interpolate(text: string, vars?: Record<string, unknown>): string {
@@ -14,7 +17,7 @@ function interpolate(text: string, vars?: Record<string, unknown>): string {
 }
 
 export function translate(source: string, vars?: Record<string, unknown>): string {
-  return interpolate(he[source] ?? source, vars);
+  return interpolate(LANGUAGE === 'he' ? (he[source] ?? source) : source, vars);
 }
 
 // מסמן מחרוזת לתרגום ומחזיר אותה כמו שהיא (התרגום מתבצע בזמן הצגה).

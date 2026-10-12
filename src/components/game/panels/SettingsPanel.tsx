@@ -231,42 +231,6 @@ export function SettingsPanel() {
                 onCheckedChange={setDisastersEnabled}
               />
             </div>
-            
-            <div className="py-2">
-              <Label>{m(UI_LABELS.spritePack)}</Label>
-              <p className="text-muted-foreground text-xs mb-2">{m(UI_LABELS.spritePackDesc)}</p>
-              <div className="grid grid-cols-1 gap-2">
-                {availableSpritePacks.map((pack) => (
-                  <button
-                    key={pack.id}
-                    onClick={() => setSpritePack(pack.id)}
-                    className={`flex items-center gap-3 p-2 rounded-md border transition-colors text-left ${
-                      currentSpritePack.id === pack.id
-                        ? 'border-primary bg-primary/10 text-foreground'
-                        : 'border-border hover:border-muted-foreground/50 text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <div className="w-10 h-10 rounded overflow-hidden bg-muted flex-shrink-0 relative">
-                      <Image 
-                        src={pack.src} 
-                        alt={pack.name}
-                        fill
-                        className="object-cover object-top"
-                        style={{ imageRendering: 'pixelated' }}
-                        unoptimized
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm truncate">{pack.name}</div>
-                      <div className="text-xs text-muted-foreground truncate">{pack.src}</div>
-                    </div>
-                    {currentSpritePack.id === pack.id && (
-                      <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
 
           <div>
@@ -299,24 +263,6 @@ export function SettingsPanel() {
                 </Button>
                 <p className="text-muted-foreground text-xs mt-1 text-center">
                   {m(UI_LABELS.expandCityDesc)}
-                </p>
-              </div>
-              <div>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    const success = shrinkCity();
-                    if (!success) {
-                      alert(String(m(UI_LABELS.cannotShrink)));
-                    }
-                  }}
-                  disabled={gridSize <= 50}
-                >
-                  {m(UI_LABELS.shrinkCity)}
-                </Button>
-                <p className="text-muted-foreground text-xs mt-1 text-center">
-                  {m(UI_LABELS.shrinkCityDesc)}
                 </p>
               </div>
             </div>
@@ -545,89 +491,7 @@ export function SettingsPanel() {
           <Separator />
           
           <div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">{m(UI_LABELS.exportGame)}</div>
-            <p className="text-muted-foreground text-xs mb-2">{m(UI_LABELS.exportGameDesc)}</p>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={handleCopyExport}
-            >
-              {exportCopied ? `✓ ${m(UI_LABELS.copied)}` : m(UI_LABELS.copyGameState)}
-            </Button>
-          </div>
-          
-          <div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">{m(UI_LABELS.importGame)}</div>
-            <p className="text-muted-foreground text-xs mb-2">{m(UI_LABELS.importGameDesc)}</p>
-            <textarea
-              className="w-full h-20 bg-background border border-border rounded-md p-2 text-xs font-mono resize-none focus:outline-none focus:ring-1 focus:ring-ring"
-              placeholder={String(m(UI_LABELS.pasteGameState))}
-              value={importValue}
-              onChange={(e) => {
-                setImportValue(e.target.value);
-                setImportError(false);
-                setImportSuccess(false);
-              }}
-            />
-            {importError && (
-              <p className="text-red-400 text-xs mt-1">{m(UI_LABELS.invalidGameState)}</p>
-            )}
-            {importSuccess && (
-              <p className="text-green-400 text-xs mt-1">{m(UI_LABELS.gameLoadedSuccess)}</p>
-            )}
-            <Button
-              variant="outline"
-              className="w-full mt-2"
-              onClick={handleImport}
-              disabled={!importValue.trim()}
-            >
-              {m(UI_LABELS.loadGameState)}
-            </Button>
-          </div>
-          
-          <div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">{m(UI_LABELS.developerTools)}</div>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => setShowSpriteTest(true)}
-            >
-              {m(UI_LABELS.openSpriteTestView)}
-            </Button>
-            <Button variant="outline" className="w-full mt-2" onClick={() => loadExampleState('example_state.json', loadState, setActivePanel)}>
-              Load Example State
-            </Button>
-            <Button variant="outline" className="w-full mt-2" onClick={() => loadExampleState('example_state_2.json', loadState, setActivePanel)}>
-              Load Example State 2
-            </Button>
-            <Button variant="outline" className="w-full mt-2" onClick={() => loadExampleState('example_state_3.json', loadState, setActivePanel)}>
-              Load Example State 3
-            </Button>
-            <Button variant="outline" className="w-full mt-2" onClick={() => loadExampleState('example_state_4.json', loadState, setActivePanel)}>
-              Load Example State 4
-            </Button>
-            <Button variant="outline" className="w-full mt-2" onClick={() => loadExampleState('example_state_5.json', loadState, setActivePanel)}>
-              Load Example State 5
-            </Button>
-            <Button variant="outline" className="w-full mt-2" onClick={() => loadExampleState('example_state_6.json', loadState, setActivePanel)}>
-              Load Example State 6
-            </Button>
-            <Button variant="outline" className="w-full mt-2" onClick={() => loadExampleState('example_state_7.json', loadState, setActivePanel)}>
-              Load Example State 7
-            </Button>
-            <Button variant="outline" className="w-full mt-2" onClick={() => loadExampleState('example_state_8.json', loadState, setActivePanel)}>
-              Load Example State 8
-            </Button>
-            <Button variant="outline" className="w-full mt-2" onClick={() => loadExampleState('example_state_9.json', loadState, setActivePanel)}>
-              Load Example State 9
-            </Button>
-            <Button variant="outline" className="w-full mt-2" onClick={() => loadExampleState('example_state_10.json', loadState, setActivePanel)}>
-              Load Example State 10
-            </Button>
-            <Button variant="outline" className="w-full mt-2" onClick={() => loadExampleState('example_state_11.json', loadState, setActivePanel)}>
-              Load Example State 11
-            </Button>
-            <div className="mt-4 pt-4 border-t border-border">
+            <div>
               <Label>{m(UI_LABELS.dayNightMode)}</Label>
               <p className="text-muted-foreground text-xs mb-2">{m(UI_LABELS.dayNightModeDesc)}</p>
               <div className="flex rounded-md border border-border overflow-hidden">

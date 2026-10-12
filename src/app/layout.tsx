@@ -41,7 +41,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: {children: React.ReactNode;}) {
   return (
-  <html className={`dark ${heebo.variable}`} lang="he" dir="rtl">
+  <html className={`dark ${heebo.variable}`} lang="en">
       <head>
         <meta name="mobile-web-app-capable" content="yes" />
                 {/* Preload critical game assets - WebP for browsers that support it */}

@@ -103,7 +103,7 @@ function TipToastContent({ message, isVisible, onContinue, onSkipAll }: TipToast
             className="text-xs gap-1"
           >
             <T>Continue</T>
-            <ArrowRight className="w-3.5 h-3.5 -scale-x-100" />
+            <ArrowRight className="w-3.5 h-3.5" />
           </Button>
         </div>
         

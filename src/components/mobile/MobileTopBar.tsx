@@ -177,7 +177,7 @@ export function MobileTopBar({
                 className={`h-6 w-6 min-w-6 p-0 m-0 flex items-center justify-center rounded-none ${
                   speed === 0 ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent/20'
                 }`}
-                title="השהיה"
+                title="Pause"
               >
                 <PauseIcon size={12} />
               </button>
@@ -186,7 +186,7 @@ export function MobileTopBar({
                 className={`h-6 w-6 min-w-6 p-0 m-0 flex items-center justify-center rounded-none ${
                   speed === 1 ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent/20'
                 }`}
-                title="מהירות רגילה"
+                title="Normal speed"
               >
                 <PlayIcon size={12} />
               </button>
@@ -223,7 +223,7 @@ export function MobileTopBar({
                 <button
                   onClick={() => setShowExitDialog(true)}
                   className="h-6 w-4 p-0 m-0 flex items-center justify-center text-muted-foreground hover:text-foreground"
-                  title="יציאה לתפריט הראשי"
+                  title="Exit to Main Menu"
                 >
                   <svg 
                     className="w-3 h-3 -scale-x-100" 

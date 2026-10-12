@@ -125,8 +125,8 @@ export interface CanvasIsometricGridProps {
 
 // Canvas-based Isometric Grid - HIGH PERFORMANCE
 export function CanvasIsometricGrid({ overlayMode, selectedTile, setSelectedTile, isMobile = false, navigationTarget, onNavigationComplete, onViewportChange, onBargeDelivery }: CanvasIsometricGridProps) {
-  const { state, latestStateRef, placeAtTile, finishTrackDrag, connectToCity, checkAndDiscoverCities, currentSpritePack, visualHour } = useGame();
-  const { grid, gridSize, selectedTool, speed, adjacentCities, waterBodies, gameVersion } = state;
+  const { state, latestStateRef, placeAtTile, finishTrackDrag, currentSpritePack, visualHour } = useGame();
+  const { grid, gridSize, selectedTool, speed, waterBodies, gameVersion } = state;
   
   // PERF: Use latestStateRef for real-time grid access in animation loops
   // This avoids waiting for React state sync which is throttled for performance
@@ -292,7 +292,6 @@ export function CanvasIsometricGrid({ overlayMode, selectedTile, setSelectedTile
   const [canvasSize, setCanvasSize] = useState({ width: 1200, height: 800 });
   const [dragStartTile, setDragStartTile] = useState<{ x: number; y: number } | null>(null);
   const [dragEndTile, setDragEndTile] = useState<{ x: number; y: number } | null>(null);
-  const [cityConnectionDialog, setCityConnectionDialog] = useState<{ direction: 'north' | 'south' | 'east' | 'west' } | null>(null);
   const keysPressedRef = useRef<Set<string>>(new Set());
 
   // Only zoning tools show the grid/rectangle selection visualization
@@ -2825,14 +2824,6 @@ export function CanvasIsometricGrid({ overlayMode, selectedTile, setSelectedTile
       
       // Create bridges for valid water crossings in the drag path
       finishTrackDrag(pathTiles, selectedTool as 'road' | 'rail');
-      
-      // Use setTimeout to allow state to update first, then check for discoverable cities
-      setTimeout(() => {
-        checkAndDiscoverCities((discoveredCity) => {
-          // Show dialog for the newly discovered city
-          setCityConnectionDialog({ direction: discoveredCity.direction });
-        });
-      }, 50);
     }
     
     // Clear drag state
@@ -2847,7 +2838,7 @@ export function CanvasIsometricGrid({ overlayMode, selectedTile, setSelectedTile
     if (!containerRef.current) {
       setHoveredTile(null);
     }
-  }, [isDragging, showsDragGrid, dragStartTile, placeAtTile, finishTrackDrag, selectedTool, dragEndTile, checkAndDiscoverCities, findBuildingOrigin, setSelectedTile, isPanning]);
+  }, [isDragging, showsDragGrid, dragStartTile, placeAtTile, finishTrackDrag, selectedTool, dragEndTile, findBuildingOrigin, setSelectedTile, isPanning]);
   
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
@@ -3098,65 +3089,6 @@ export function CanvasIsometricGrid({ overlayMode, selectedTile, setSelectedTile
       )}
       
       {/* City Connection Dialog */}
-      {cityConnectionDialog && (() => {
-        // Find a discovered but not connected city in this direction
-        const city = adjacentCities.find(c => c.direction === cityConnectionDialog.direction && c.discovered && !c.connected);
-        if (!city) return null;
-        
-        return (
-          <Dialog open={true} onOpenChange={() => {
-            setCityConnectionDialog(null);
-            setDragStartTile(null);
-            setDragEndTile(null);
-          }}>
-            <DialogContent 
-              className="max-w-[400px]"
-              onPointerDown={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()}
-            >
-              <DialogHeader>
-                <DialogTitle>גילית עיר!</DialogTitle>
-                <DialogDescription>
-                  הכביש שלך הגיע לגבול ה{{ north: 'צפוני', south: 'דרומי', east: 'מזרחי', west: 'מערבי' }[cityConnectionDialog.direction]}! גילית את {city.name}.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="flex flex-col gap-4 mt-4">
-                <div className="text-sm text-muted-foreground">
-                  החיבור ל{city.name} יפתח נתיב מסחר ויעניק:
-                  <ul className="mt-2 space-y-1 list-disc list-inside">
-                    <li>$5,000 מענק חד-פעמי</li>
-                    <li>$200 בחודש הכנסה נוספת</li>
-                  </ul>
-                </div>
-                <div className="flex gap-2 justify-end">
-                  <Button
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setCityConnectionDialog(null);
-                        setDragStartTile(null);
-                        setDragEndTile(null);
-                      }}
-                    >
-                      אולי מאוחר יותר
-                    </Button>
-                    <Button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        connectToCity(city.id);
-                        setCityConnectionDialog(null);
-                        setDragStartTile(null);
-                        setDragEndTile(null);
-                      }}
-                    >
-                      חיבור ל{city.name}
-                    </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        );
-      })()}
       
       {hoveredTile && selectedTool !== 'select' && TOOL_INFO[selectedTool] && (() => {
         // Check if this is a waterfront building tool and if placement is valid

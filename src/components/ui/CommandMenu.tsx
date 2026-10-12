@@ -1,5 +1,6 @@
 'use client';
 
+import { visibleTools } from '@/lib/hiddenTools';
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { msg, useMessages } from '@/i18n';
 import { useGame } from '@/context/GameContext';
@@ -51,7 +52,7 @@ function buildMenuItems(): MenuItem[] {
   const items: MenuItem[] = [];
 
   // Tools category
-  const toolsCategory: Tool[] = ['select', 'bulldoze', 'road', 'rail', 'subway'];
+  const toolsCategory: Tool[] = visibleTools(['select', 'bulldoze', 'road', 'rail', 'subway']);
   toolsCategory.forEach(tool => {
     const info = TOOL_INFO[tool];
     items.push({
@@ -67,7 +68,7 @@ function buildMenuItems(): MenuItem[] {
   });
 
   // Zones category (R/C/I)
-  const zonesCategory: Tool[] = ['zone_residential', 'zone_commercial', 'zone_industrial'];
+  const zonesCategory: Tool[] = visibleTools(['zone_residential', 'zone_commercial', 'zone_industrial']);
   zonesCategory.forEach(tool => {
     const info = TOOL_INFO[tool];
     items.push({
@@ -83,7 +84,7 @@ function buildMenuItems(): MenuItem[] {
   });
 
   // Zoning category (de-zone and terraform tools)
-  const zoningCategory: Tool[] = ['zone_dezone', 'zone_water', 'zone_land'];
+  const zoningCategory: Tool[] = visibleTools(['zone_dezone', 'zone_water', 'zone_land']);
   zoningCategory.forEach(tool => {
     const info = TOOL_INFO[tool];
     const keywords = [info.name.toLowerCase(), tool, 'zoning'];
@@ -107,7 +108,7 @@ function buildMenuItems(): MenuItem[] {
   });
 
   // Services
-  const servicesCategory: Tool[] = ['police_station', 'fire_station', 'hospital', 'school', 'university'];
+  const servicesCategory: Tool[] = visibleTools(['police_station', 'fire_station', 'hospital', 'school', 'university']);
   servicesCategory.forEach(tool => {
     const info = TOOL_INFO[tool];
     items.push({
@@ -123,7 +124,7 @@ function buildMenuItems(): MenuItem[] {
   });
 
   // Parks (includes former recreation items)
-  const parksCategory: Tool[] = ['tree', 'park', 'park_large', 'tennis', 'playground_small', 'playground_large', 'community_garden', 'pond_park', 'park_gate', 'greenhouse_garden', 'mini_golf_course', 'go_kart_track', 'amphitheater', 'roller_coaster_small', 'campground', 'cabin_house', 'mountain_lodge', 'mountain_trailhead'];
+  const parksCategory: Tool[] = visibleTools(['tree', 'park', 'park_large', 'tennis', 'playground_small', 'playground_large', 'community_garden', 'pond_park', 'park_gate', 'greenhouse_garden', 'mini_golf_course', 'go_kart_track', 'amphitheater', 'roller_coaster_small', 'campground', 'cabin_house', 'mountain_lodge', 'mountain_trailhead']);
   parksCategory.forEach(tool => {
     const info = TOOL_INFO[tool];
     items.push({
@@ -139,7 +140,7 @@ function buildMenuItems(): MenuItem[] {
   });
 
   // Sports
-  const sportsCategory: Tool[] = ['basketball_courts', 'soccer_field_small', 'baseball_field_small', 'football_field', 'baseball_stadium', 'swimming_pool', 'skate_park', 'bleachers_field'];
+  const sportsCategory: Tool[] = visibleTools(['basketball_courts', 'soccer_field_small', 'baseball_field_small', 'football_field', 'baseball_stadium', 'swimming_pool', 'skate_park', 'bleachers_field']);
   sportsCategory.forEach(tool => {
     const info = TOOL_INFO[tool];
     items.push({
@@ -155,7 +156,7 @@ function buildMenuItems(): MenuItem[] {
   });
 
   // Waterfront
-  const waterfrontCategory: Tool[] = ['marina_docks_small', 'pier_large'];
+  const waterfrontCategory: Tool[] = visibleTools(['marina_docks_small', 'pier_large']);
   waterfrontCategory.forEach(tool => {
     const info = TOOL_INFO[tool];
     items.push({
@@ -171,7 +172,7 @@ function buildMenuItems(): MenuItem[] {
   });
 
   // Community
-  const communityCategory: Tool[] = ['community_center', 'animal_pens_farm', 'office_building_small'];
+  const communityCategory: Tool[] = visibleTools(['community_center', 'animal_pens_farm', 'office_building_small']);
   communityCategory.forEach(tool => {
     const info = TOOL_INFO[tool];
     items.push({
@@ -187,7 +188,7 @@ function buildMenuItems(): MenuItem[] {
   });
 
   // Utilities
-  const utilitiesCategory: Tool[] = ['power_plant', 'water_tower', 'subway_station', 'rail_station'];
+  const utilitiesCategory: Tool[] = visibleTools(['power_plant', 'water_tower', 'subway_station', 'rail_station']);
   utilitiesCategory.forEach(tool => {
     const info = TOOL_INFO[tool];
     items.push({
@@ -203,7 +204,7 @@ function buildMenuItems(): MenuItem[] {
   });
 
   // Special
-  const specialCategory: Tool[] = ['stadium', 'museum', 'airport', 'space_program', 'city_hall', 'amusement_park'];
+  const specialCategory: Tool[] = visibleTools(['stadium', 'museum', 'airport', 'space_program', 'city_hall', 'amusement_park']);
   specialCategory.forEach(tool => {
     const info = TOOL_INFO[tool];
     items.push({
@@ -410,7 +411,7 @@ export function CommandMenu() {
             ref={inputRef}
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder="חיפוש כלים, מבנים ולוחות..."
+            placeholder="Search tools, buildings, panels..."
             className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent h-12 text-sm"
           />
           <kbd className="hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border border-sidebar-border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">

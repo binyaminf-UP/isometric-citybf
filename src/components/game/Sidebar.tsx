@@ -1,5 +1,6 @@
 'use client';
 
+import { visibleTools } from '@/lib/hiddenTools';
 import { APP_NAME } from '@/lib/appInfo';
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { msg, useMessages, translate } from '@/i18n';
@@ -462,7 +463,7 @@ function ExitDialog({
 
 // Memoized Sidebar Component
 export const Sidebar = React.memo(function Sidebar({ onExit }: { onExit?: () => void }) {
-  const { state, setTool, setActivePanel, saveCity, expandCity, shrinkCity } = useGame();
+  const { state, setTool, setActivePanel, saveCity, expandCity } = useGame();
   const { selectedTool, stats, activePanel } = state;
   const [showExitDialog, setShowExitDialog] = useState(false);
   const m = useMessages();
@@ -480,15 +481,15 @@ export const Sidebar = React.memo(function Sidebar({ onExit }: { onExit?: () => 
   
   // Direct tool categories (shown inline)
   const directCategories = useMemo(() => ({
-    'TOOLS': ['select', 'bulldoze', 'road', 'rail', 'subway'] as Tool[],
-    'ZONES': ['zone_residential', 'zone_commercial', 'zone_industrial'] as Tool[],
+    'TOOLS': visibleTools(['select', 'bulldoze', 'road', 'rail', 'subway']),
+    'ZONES': visibleTools(['zone_residential', 'zone_commercial', 'zone_industrial']),
   }), []);
   
   // Zoning submenu (shown under ZONES section, before BUILDINGS)
   const zoningSubmenu = useMemo(() => ({
     key: 'zoning',
     label: CATEGORY_LABELS.zoning,
-    tools: ['zone_dezone', 'zone_water', 'zone_land'] as Tool[]
+    tools: visibleTools(['zone_dezone', 'zone_water', 'zone_land'])
   }), []);
   
   // Expand City submenu (shown under TOOLS section)
@@ -499,51 +500,45 @@ export const Sidebar = React.memo(function Sidebar({ onExit }: { onExit?: () => 
       description: 'Add 15 tiles to each edge of the city',
       onClick: expandCity,
     },
-    {
-      key: 'shrink_city',
-      name: TOOL_INFO['shrink_city'].name,
-      description: 'Remove 15 tiles from each edge of the city',
-      onClick: shrinkCity,
-    },
-  ], [expandCity, shrinkCity]);
+  ], [expandCity]);
   
   // Submenu categories (hover to expand) - includes all new assets from main
   const submenuCategories = useMemo(() => [
     { 
       key: 'services', 
       label: CATEGORY_LABELS.services, 
-      tools: ['police_station', 'fire_station', 'hospital', 'school', 'university'] as Tool[]
+      tools: visibleTools(['police_station', 'fire_station', 'hospital', 'school', 'university'])
     },
     { 
       key: 'parks', 
       label: CATEGORY_LABELS.parks, 
-      tools: ['tree', 'park', 'park_large', 'tennis', 'playground_small', 'playground_large', 'community_garden', 'pond_park', 'park_gate', 'greenhouse_garden', 'mini_golf_course', 'go_kart_track', 'amphitheater', 'roller_coaster_small', 'campground', 'cabin_house', 'mountain_lodge', 'mountain_trailhead'] as Tool[]
+      tools: visibleTools(['tree', 'park', 'park_large', 'tennis', 'playground_small', 'playground_large', 'community_garden', 'pond_park', 'park_gate', 'greenhouse_garden', 'mini_golf_course', 'go_kart_track', 'amphitheater', 'roller_coaster_small', 'campground', 'cabin_house', 'mountain_lodge', 'mountain_trailhead'])
     },
     { 
       key: 'sports', 
       label: CATEGORY_LABELS.sports, 
-      tools: ['basketball_courts', 'soccer_field_small', 'baseball_field_small', 'football_field', 'baseball_stadium', 'swimming_pool', 'skate_park', 'bleachers_field'] as Tool[]
+      tools: visibleTools(['basketball_courts', 'soccer_field_small', 'baseball_field_small', 'football_field', 'baseball_stadium', 'swimming_pool', 'skate_park', 'bleachers_field'])
     },
     { 
       key: 'waterfront', 
       label: CATEGORY_LABELS.waterfront, 
-      tools: ['marina_docks_small', 'pier_large'] as Tool[]
+      tools: visibleTools(['marina_docks_small', 'pier_large'])
     },
     { 
       key: 'community', 
       label: CATEGORY_LABELS.community, 
-      tools: ['community_center', 'animal_pens_farm', 'office_building_small'] as Tool[]
+      tools: visibleTools(['community_center', 'animal_pens_farm', 'office_building_small'])
     },
     { 
       key: 'utilities', 
       label: CATEGORY_LABELS.utilities, 
-      tools: ['power_plant', 'water_tower', 'subway_station', 'rail_station'] as Tool[],
+      tools: visibleTools(['power_plant', 'water_tower', 'subway_station', 'rail_station']),
       forceOpenUpward: true
     },
     { 
       key: 'special', 
       label: CATEGORY_LABELS.special, 
-      tools: ['stadium', 'museum', 'airport', 'space_program', 'city_hall', 'amusement_park'] as Tool[],
+      tools: visibleTools(['stadium', 'museum', 'airport', 'space_program', 'city_hall', 'amusement_park']),
       forceOpenUpward: true
     },
   ], []);
@@ -558,7 +553,7 @@ export const Sidebar = React.memo(function Sidebar({ onExit }: { onExit?: () => 
               variant="ghost"
               size="icon-sm"
               onClick={openCommandMenu}
-              title="חיפוש (⌘K)"
+              title="Search (⌘K)"
               className="h-7 w-7 text-muted-foreground hover:text-sidebar-foreground"
             >
               <svg 
@@ -575,7 +570,7 @@ export const Sidebar = React.memo(function Sidebar({ onExit }: { onExit?: () => 
                 variant="ghost"
                 size="icon-sm"
                 onClick={() => setShowExitDialog(true)}
-                title="יציאה לתפריט הראשי"
+                title="Exit to Main Menu"
                 className="h-7 w-7 text-muted-foreground hover:text-sidebar-foreground"
               >
                 <svg 

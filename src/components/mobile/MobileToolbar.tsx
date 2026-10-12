@@ -1,5 +1,6 @@
 'use client';
 
+import { visibleTools } from '@/lib/hiddenTools';
 import React, { useState } from 'react';
 import { msg, useMessages } from '@/i18n';
 import { useGame } from '@/context/GameContext';
@@ -227,16 +228,16 @@ const UI_LABELS = {
 };
 
 const toolCategories = {
-  'TOOLS': ['select', 'bulldoze', 'road', 'rail', 'subway'] as Tool[],
-  'ZONES': ['zone_residential', 'zone_commercial', 'zone_industrial'] as Tool[],
-  'ZONING': ['zone_dezone', 'zone_water', 'zone_land'] as Tool[],
-  'UTILITIES': ['power_plant', 'water_tower', 'subway_station', 'rail_station'] as Tool[],
-  'SERVICES': ['police_station', 'fire_station', 'hospital', 'school', 'university'] as Tool[],
-  'PARKS': ['park', 'park_large', 'tennis', 'playground_small', 'playground_large', 'community_garden', 'pond_park', 'park_gate', 'greenhouse_garden', 'mini_golf_course', 'go_kart_track', 'amphitheater', 'roller_coaster_small', 'campground', 'cabin_house', 'mountain_lodge', 'mountain_trailhead'] as Tool[],
-  'SPORTS': ['tennis', 'basketball_courts', 'soccer_field_small', 'baseball_field_small', 'football_field', 'baseball_stadium', 'swimming_pool', 'skate_park', 'bleachers_field'] as Tool[],
-  'WATERFRONT': ['marina_docks_small', 'pier_large'] as Tool[],
-  'COMMUNITY': ['community_center', 'animal_pens_farm', 'office_building_small'] as Tool[],
-  'SPECIAL': ['stadium', 'museum', 'airport', 'space_program', 'city_hall', 'amusement_park'] as Tool[],
+  'TOOLS': visibleTools(['select', 'bulldoze', 'road', 'rail', 'subway']),
+  'ZONES': visibleTools(['zone_residential', 'zone_commercial', 'zone_industrial']),
+  'ZONING': visibleTools(['zone_dezone', 'zone_water', 'zone_land']),
+  'UTILITIES': visibleTools(['power_plant', 'water_tower', 'subway_station', 'rail_station']),
+  'SERVICES': visibleTools(['police_station', 'fire_station', 'hospital', 'school', 'university']),
+  'PARKS': visibleTools(['park', 'park_large', 'tennis', 'playground_small', 'playground_large', 'community_garden', 'pond_park', 'park_gate', 'greenhouse_garden', 'mini_golf_course', 'go_kart_track', 'amphitheater', 'roller_coaster_small', 'campground', 'cabin_house', 'mountain_lodge', 'mountain_trailhead']),
+  'SPORTS': visibleTools(['tennis', 'basketball_courts', 'soccer_field_small', 'baseball_field_small', 'football_field', 'baseball_stadium', 'swimming_pool', 'skate_park', 'bleachers_field']),
+  'WATERFRONT': visibleTools(['marina_docks_small', 'pier_large']),
+  'COMMUNITY': visibleTools(['community_center', 'animal_pens_farm', 'office_building_small']),
+  'SPECIAL': visibleTools(['stadium', 'museum', 'airport', 'space_program', 'city_hall', 'amusement_park']),
 };
 
 type OverlayMode = 'none' | 'power' | 'water' | 'fire' | 'police' | 'health' | 'education' | 'subway';
@@ -248,7 +249,7 @@ interface MobileToolbarProps {
 }
 
 export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMode }: MobileToolbarProps) {
-  const { state, setTool, expandCity, shrinkCity } = useGame();
+  const { state, setTool, expandCity } = useGame();
   const { selectedTool, stats } = state;
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
@@ -539,13 +540,6 @@ export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMod
                               onClick={() => { expandCity(); setShowMenu(false); }}
                             >
                               <span className="flex-1 text-left">{m(TOOL_INFO['expand_city'].name)}</span>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              className="w-full justify-start gap-3 h-11"
-                              onClick={() => { shrinkCity(); setShowMenu(false); }}
-                            >
-                              <span className="flex-1 text-left">{m(TOOL_INFO['shrink_city'].name)}</span>
                             </Button>
                           </div>
                         )}
