@@ -227,17 +227,17 @@ const UI_LABELS = {
   settings: msg('Settings'),
 };
 
-const toolCategories = {
-  'TOOLS': visibleTools(['select', 'bulldoze', 'road', 'rail', 'subway']),
-  'ZONES': visibleTools(['zone_residential', 'zone_commercial', 'zone_industrial']),
-  'UTILITIES': visibleTools(['power_plant', 'water_tower', 'subway_station', 'rail_station']),
-  'SERVICES': visibleTools(['police_station', 'fire_station', 'hospital', 'school', 'university']),
-  'PARKS': visibleTools(['park', 'park_large', 'tennis', 'playground_small', 'playground_large', 'community_garden', 'pond_park', 'park_gate', 'greenhouse_garden', 'mini_golf_course', 'go_kart_track', 'amphitheater', 'roller_coaster_small', 'campground', 'cabin_house', 'mountain_lodge', 'mountain_trailhead']),
-  'SPORTS': visibleTools(['tennis', 'basketball_courts', 'soccer_field_small', 'baseball_field_small', 'football_field', 'baseball_stadium', 'swimming_pool', 'skate_park', 'bleachers_field']),
-  'WATERFRONT': visibleTools(['marina_docks_small', 'pier_large']),
-  'COMMUNITY': visibleTools(['community_center', 'animal_pens_farm', 'office_building_small']),
-  'SPECIAL': visibleTools(['stadium', 'museum', 'airport', 'space_program', 'city_hall', 'amusement_park']),
-};
+// Bottom-bar pickers: Infrastructure (blue) and Public (brown).
+const INFRA_TOOLS: Tool[] = visibleTools(['rail', 'rail_station', 'subway', 'subway_station', 'power_plant', 'water_tower']);
+
+const PUBLIC_TABS: { key: string; label: unknown; tools: Tool[] }[] = [
+  { key: 'safety', label: msg('Safety & Health'), tools: visibleTools(['police_station', 'fire_station', 'hospital']) },
+  { key: 'edu', label: msg('Education & Community'), tools: visibleTools(['school', 'university', 'community_center', 'museum', 'city_hall', 'office_building_small', 'animal_pens_farm']) },
+  { key: 'leisure', label: msg('Leisure'), tools: visibleTools(['tree', 'park', 'park_large', 'playground_small', 'playground_large', 'community_garden', 'tennis', 'basketball_courts', 'soccer_field_small', 'swimming_pool', 'campground', 'mountain_lodge']) },
+  { key: 'landmarks', label: msg('Landmarks'), tools: visibleTools(['stadium', 'airport', 'space_program', 'amusement_park', 'roller_coaster_small', 'marina_docks_small', 'pier_large']) },
+];
+
+type PickerId = 'infra' | 'public';
 
 type OverlayMode = 'none' | 'power' | 'water' | 'fire' | 'police' | 'health' | 'education' | 'subway';
 
@@ -250,16 +250,14 @@ interface MobileToolbarProps {
 export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMode }: MobileToolbarProps) {
   const { state, setTool } = useGame();
   const { selectedTool, stats } = state;
-  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [picker, setPicker] = useState<PickerId | null>(null);
+  const [publicTab, setPublicTab] = useState(PUBLIC_TABS[0].key);
   const [showMenu, setShowMenu] = useState(false);
   const m = useMessages();
 
-  const handleCategoryClick = (category: string) => {
-    if (expandedCategory === category) {
-      setExpandedCategory(null);
-    } else {
-      setExpandedCategory(category);
-    }
+  const togglePicker = (id: PickerId) => {
+    setShowMenu(false);
+    setPicker(picker === id ? null : id);
   };
 
   const handleToolSelect = (tool: Tool, closeMenu: boolean = false) => {
@@ -269,7 +267,7 @@ export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMod
     } else {
       setTool(tool);
     }
-    setExpandedCategory(null);
+    setPicker(null);
     if (closeMenu) {
       setShowMenu(false);
     }
@@ -324,12 +322,14 @@ export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMod
             </Button>
 
             <Button
-              variant={selectedTool === 'rail' ? 'default' : 'ghost'}
+              variant={picker === 'infra' || INFRA_TOOLS.includes(selectedTool) ? 'default' : 'ghost'}
               size="icon"
               className="h-11 w-auto min-w-0 flex-1 max-w-11 px-0"
-              onClick={() => handleToolSelect('rail')}
+              onClick={() => togglePicker('infra')}
             >
-              {QuickToolIcons.rail}
+              <div className="w-5 h-5 rounded-sm bg-blue-500 flex items-center justify-center text-white">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6z" /></svg>
+              </div>
             </Button>
 
             {/* Zone buttons */}
@@ -360,12 +360,21 @@ export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMod
               {QuickToolIcons.zone_industrial}
             </Button>
 
+            <Button
+              variant={picker === 'public' || PUBLIC_TABS.some((t) => t.tools.includes(selectedTool)) ? 'default' : 'ghost'}
+              size="icon"
+              className="h-11 w-auto min-w-0 flex-1 max-w-11 px-0"
+              onClick={() => togglePicker('public')}
+            >
+              <div className="w-5 h-5 rounded-sm bg-amber-800 flex items-center justify-center text-[10px] font-bold text-white">P</div>
+            </Button>
+
             {/* More tools menu button */}
             <Button
               variant={showMenu ? 'default' : 'secondary'}
               size="icon"
               className="h-11 w-auto min-w-0 flex-1 max-w-11 px-0"
-              onClick={() => setShowMenu(!showMenu)}
+              onClick={() => { setPicker(null); setShowMenu(!showMenu); }}
             >
               {showMenu ? (
                 <CloseIcon size={20} />
@@ -380,6 +389,58 @@ export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMod
           </div>
         </Card>
       </div>
+
+      {/* Infrastructure / Public picker */}
+      {picker && (
+        <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={() => setPicker(null)}>
+          <Card
+            className="absolute bottom-24 left-2 right-2 max-h-[65vh] overflow-hidden rounded-xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-3 pt-3 pb-1 text-xs text-muted-foreground uppercase tracking-wider flex-shrink-0">
+              {picker === 'infra' ? m(msg('Infrastructure')) : m(msg('Public'))}
+            </div>
+            {picker === 'public' && (
+              <div className="grid grid-cols-4 gap-1 px-2 pb-2 flex-shrink-0">
+                {PUBLIC_TABS.map((tab) => (
+                  <Button
+                    key={tab.key}
+                    variant={publicTab === tab.key ? 'secondary' : 'ghost'}
+                    size="sm"
+                    className="h-auto min-h-9 px-1 py-1 text-[11px] leading-tight whitespace-normal"
+                    onClick={() => setPublicTab(tab.key)}
+                  >
+                    {m(tab.label as Parameters<typeof m>[0])}
+                  </Button>
+                ))}
+              </div>
+            )}
+            <div className="overflow-y-auto overscroll-contain p-2 pt-0">
+              <div className="grid grid-cols-3 gap-1.5">
+                {(picker === 'infra' ? INFRA_TOOLS : (PUBLIC_TABS.find((t) => t.key === publicTab)?.tools ?? [])).map((tool) => {
+                  const info = TOOL_INFO[tool];
+                  if (!info) return null;
+                  const canAfford = stats.money >= info.cost;
+                  return (
+                    <Button
+                      key={tool}
+                      variant={selectedTool === tool ? 'default' : 'outline'}
+                      className="h-auto min-h-14 flex-col gap-0.5 px-1 py-1.5 whitespace-normal text-center"
+                      disabled={!canAfford && info.cost > 0}
+                      onClick={() => handleToolSelect(tool)}
+                    >
+                      <span className="text-xs leading-tight">{m(info.name)}</span>
+                      {info.cost > 0 && (
+                        <span className={`text-[10px] font-mono ${canAfford ? 'text-green-400' : 'text-red-400'}`}>${info.cost}</span>
+                      )}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* Expanded Tool Menu */}
       {showMenu && (
@@ -504,60 +565,6 @@ export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMod
               </div>
             )}
 
-            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
-              <div className="p-2 space-y-1 pb-4">
-                {/* Category buttons */}
-                {Object.entries(toolCategories).map(([category, tools]) => (
-                  <div key={category}>
-
-                    <Button
-                      variant={expandedCategory === category ? 'secondary' : 'ghost'}
-                      className="w-full justify-start gap-3 h-12"
-                      onClick={() => handleCategoryClick(category)}
-                    >
-                      <span className="flex-1 text-left font-medium">{m((CATEGORY_LABELS[category] || category) as Parameters<typeof m>[0])}</span>
-                      <svg
-                        className={`w-4 h-4 transition-transform ${expandedCategory === category ? 'rotate-180' : ''}`}
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path d="M6 9l6 6 6-6" />
-                      </svg>
-                    </Button>
-
-                    {/* Expanded tools */}
-                    {expandedCategory === category && (
-                      <div className="pl-4 py-1 space-y-0.5">
-                        {tools.map((tool) => {
-                          const info = TOOL_INFO[tool];
-                          if (!info) return null;
-                          const canAfford = stats.money >= info.cost;
-
-                          return (
-                            <Button
-                              key={tool}
-                              variant={selectedTool === tool ? 'default' : 'ghost'}
-                              className="w-full justify-start gap-3 h-11"
-                              disabled={!canAfford && info.cost > 0}
-                              onClick={() => handleToolSelect(tool, true)}
-                            >
-                              <span className="flex-1 text-left">{m(info.name)}</span>
-                              {info.cost > 0 && (
-                                <span className={`text-xs font-mono ${canAfford ? 'text-green-400' : 'text-red-400'}`}>
-                                  ${info.cost}
-                                </span>
-                              )}
-                            </Button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
           </Card>
         </div>
       )}

@@ -243,9 +243,9 @@ export function MobileTopBar({
         {/* Demand indicators row */}
         <div className="flex items-center justify-between px-3 py-1 border-t border-sidebar-border/50 bg-secondary/30">
           <div className="flex items-center gap-3">
-            <DemandBar label="R" demand={stats.demand.residential} color="text-green-500" />
-            <DemandBar label="C" demand={stats.demand.commercial} color="text-blue-500" />
-            <DemandBar label="I" demand={stats.demand.industrial} color="text-amber-500" />
+            <DemandBar label="R" demand={stats.demand.residential} color="text-orange-500" />
+            <DemandBar label="C" demand={stats.demand.commercial} color="text-gray-500" />
+            <DemandBar label="I" demand={stats.demand.industrial} color="text-purple-500" />
           </div>
 
           <button
