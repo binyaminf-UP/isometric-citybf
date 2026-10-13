@@ -257,6 +257,7 @@ export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMod
 
   const togglePicker = (id: PickerId) => {
     setShowMenu(false);
+    if (picker !== id) setTool('select');
     setPicker(picker === id ? null : id);
   };
 
@@ -295,7 +296,7 @@ export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMod
           <div className="flex items-center justify-between px-1 py-2 gap-0.5">
             {/* Quick access tools */}
             <Button
-              variant={selectedTool === 'select' ? 'default' : 'ghost'}
+              variant={selectedTool === 'select' && !picker ? 'default' : 'ghost'}
               size="icon"
               className="h-11 w-auto min-w-0 flex-1 max-w-11 px-0"
               onClick={() => handleToolSelect('select')}
@@ -400,21 +401,6 @@ export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMod
             <div className="px-3 pt-3 pb-1 text-xs text-muted-foreground uppercase tracking-wider flex-shrink-0">
               {picker === 'infra' ? m(msg('Infrastructure')) : m(msg('Public'))}
             </div>
-            {picker === 'public' && (
-              <div className="grid grid-cols-4 gap-1 px-2 pb-2 flex-shrink-0">
-                {PUBLIC_TABS.map((tab) => (
-                  <Button
-                    key={tab.key}
-                    variant={publicTab === tab.key ? 'secondary' : 'ghost'}
-                    size="sm"
-                    className="h-auto min-h-9 px-1 py-1 text-[11px] leading-tight whitespace-normal"
-                    onClick={() => setPublicTab(tab.key)}
-                  >
-                    {m(tab.label as Parameters<typeof m>[0])}
-                  </Button>
-                ))}
-              </div>
-            )}
             <div className="overflow-y-auto overscroll-contain p-2 pt-0">
               <div className="grid grid-cols-3 gap-1.5">
                 {(picker === 'infra' ? INFRA_TOOLS : (PUBLIC_TABS.find((t) => t.key === publicTab)?.tools ?? [])).map((tool) => {
@@ -438,6 +424,21 @@ export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMod
                 })}
               </div>
             </div>
+            {picker === 'public' && (
+              <div className="grid grid-cols-4 gap-1 px-2 pt-2 pb-2 flex-shrink-0 border-t border-border">
+                {PUBLIC_TABS.map((tab) => (
+                  <Button
+                    key={tab.key}
+                    variant={publicTab === tab.key ? 'secondary' : 'ghost'}
+                    size="sm"
+                    className="h-auto min-h-9 px-1 py-1 text-[11px] leading-tight whitespace-normal"
+                    onClick={() => setPublicTab(tab.key)}
+                  >
+                    {m(tab.label as Parameters<typeof m>[0])}
+                  </Button>
+                ))}
+              </div>
+            )}
           </Card>
         </div>
       )}

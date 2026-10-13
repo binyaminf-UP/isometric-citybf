@@ -2116,6 +2116,39 @@ export function CanvasIsometricGrid({ overlayMode, selectedTile, setSelectedTile
           }
         }
         
+        // Subway view: mark every subway station clearly so it is easy to see where to connect
+        if (overlayMode === 'subway') {
+          for (let y = 0; y < gridSize; y++) {
+            for (let x = 0; x < gridSize; x++) {
+              if (grid[y][x].building.type !== 'subway_station') continue;
+              const { screenX: stX, screenY: stY } = gridToScreen(x, y, 0, 0);
+              const cx = stX + halfTileWidth;
+              const cy = stY + halfTileHeight;
+              buildingsCtx.strokeStyle = 'rgba(253, 224, 71, 1)';
+              buildingsCtx.lineWidth = 3 / zoom;
+              buildingsCtx.beginPath();
+              buildingsCtx.moveTo(stX + halfTileWidth, stY);
+              buildingsCtx.lineTo(stX + tileWidth, stY + halfTileHeight);
+              buildingsCtx.lineTo(stX + halfTileWidth, stY + tileHeight);
+              buildingsCtx.lineTo(stX, stY + halfTileHeight);
+              buildingsCtx.closePath();
+              buildingsCtx.stroke();
+              buildingsCtx.fillStyle = 'rgba(234, 179, 8, 1)';
+              buildingsCtx.beginPath();
+              buildingsCtx.arc(cx, cy - halfTileHeight, 11, 0, Math.PI * 2);
+              buildingsCtx.fill();
+              buildingsCtx.strokeStyle = 'rgba(15, 18, 25, 1)';
+              buildingsCtx.lineWidth = 2;
+              buildingsCtx.stroke();
+              buildingsCtx.fillStyle = 'rgba(15, 18, 25, 1)';
+              buildingsCtx.font = 'bold 13px sans-serif';
+              buildingsCtx.textAlign = 'center';
+              buildingsCtx.textBaseline = 'middle';
+              buildingsCtx.fillText('M', cx, cy - halfTileHeight + 1);
+            }
+          }
+        }
+        
         buildingsCtx.setTransform(1, 0, 0, 1, 0, 0);
       }
     }
@@ -3142,22 +3175,28 @@ export function CanvasIsometricGrid({ overlayMode, selectedTile, setSelectedTile
       
       {/* Incident Tooltip - shows when hovering over fire or crime */}
       {hoveredIncident && (() => {
-        // Calculate position to avoid overflow
-        const tooltipWidth = 200;
-        const padding = 16;
+        // Always centered horizontally on screen, above (or below) the incident, with an arrow pointing at it
+        const tooltipWidth = 220;
         const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1920;
-        
-        // Check if tooltip would overflow right edge
-        const wouldOverflowRight = hoveredIncident.screenX + padding + tooltipWidth > viewportWidth - padding;
-        const left = wouldOverflowRight 
-          ? hoveredIncident.screenX - tooltipWidth - padding 
-          : hoveredIncident.screenX + padding;
+        const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 1080;
+        const left = Math.max(8, (viewportWidth - tooltipWidth) / 2);
+        const placeAbove = hoveredIncident.screenY > 220;
+        const arrowX = Math.min(tooltipWidth - 16, Math.max(16, hoveredIncident.screenX - left));
+        const positionStyle = placeAbove
+          ? { left, bottom: viewportHeight - hoveredIncident.screenY + 18 }
+          : { left, top: hoveredIncident.screenY + 26 };
         
         return (
           <div 
             className="fixed pointer-events-none z-[100]"
-            style={{ left, top: hoveredIncident.screenY - 8 }}
+            style={positionStyle}
           >
+            {!placeAbove && (
+              <div
+                className="absolute w-3 h-3 rotate-45 bg-sidebar border-l border-t border-sidebar-border"
+                style={{ left: arrowX - 6, top: -6 }}
+              />
+            )}
             <div className="bg-sidebar border border-sidebar-border rounded-md shadow-lg px-3 py-2 w-[220px]">
               {/* Header */}
               <div className="flex gap-2 items-center mb-1">
@@ -3189,6 +3228,12 @@ export function CanvasIsometricGrid({ overlayMode, selectedTile, setSelectedTile
                 ({hoveredIncident.x}, {hoveredIncident.y})
               </div>
             </div>
+            {placeAbove && (
+              <div
+                className="absolute w-3 h-3 rotate-45 bg-sidebar border-r border-b border-sidebar-border"
+                style={{ left: arrowX - 6, bottom: -6 }}
+              />
+            )}
           </div>
         );
       })()}
