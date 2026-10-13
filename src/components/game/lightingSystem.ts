@@ -335,9 +335,17 @@ export function useLightingSystem(config: LightingSystemConfig): void {
     // PERF: Hide lighting during panning/zooming for better performance
     // This prevents ugly light sampling artifacts and improves pan smoothness
     // On desktop, also hide during wheel zoom (isWheelZoomingRef)
+    // Keep the plain night tint during these gestures (without light cutouts), so the
+    // screen doesn't flash bright while panning or zooming at night.
     if (isPanningRef.current || isPinchZoomingRef.current || isWheelZoomingRef.current) {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const gestureDarkness = getDarkness(visualHour);
+      if (gestureDarkness > 0.01) {
+        const gestureAmbient = getAmbientColor(visualHour);
+        ctx.fillStyle = `rgba(${gestureAmbient.r}, ${gestureAmbient.g}, ${gestureAmbient.b}, ${gestureDarkness * 0.6})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
       return;
     }
     

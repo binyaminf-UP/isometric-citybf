@@ -99,13 +99,13 @@ const QuickToolIcons: Partial<Record<Tool, React.ReactNode>> = {
   subway: <SubwayIcon size={20} />,
   tree: <TreeIcon size={20} />,
   zone_residential: (
-    <div className="w-5 h-5 rounded-sm bg-green-500 flex items-center justify-center text-[10px] font-bold text-white">R</div>
+    <div className="w-5 h-5 rounded-sm bg-orange-500 flex items-center justify-center text-[10px] font-bold text-white">R</div>
   ),
   zone_commercial: (
-    <div className="w-5 h-5 rounded-sm bg-blue-500 flex items-center justify-center text-[10px] font-bold text-white">C</div>
+    <div className="w-5 h-5 rounded-sm bg-gray-500 flex items-center justify-center text-[10px] font-bold text-white">C</div>
   ),
   zone_industrial: (
-    <div className="w-5 h-5 rounded-sm bg-amber-500 flex items-center justify-center text-[10px] font-bold text-white">I</div>
+    <div className="w-5 h-5 rounded-sm bg-purple-500 flex items-center justify-center text-[10px] font-bold text-white">I</div>
   ),
   zone_dezone: (
     <div className="w-5 h-5 rounded-sm bg-gray-500 flex items-center justify-center text-[10px] font-bold text-white">X</div>
@@ -230,7 +230,6 @@ const UI_LABELS = {
 const toolCategories = {
   'TOOLS': visibleTools(['select', 'bulldoze', 'road', 'rail', 'subway']),
   'ZONES': visibleTools(['zone_residential', 'zone_commercial', 'zone_industrial']),
-  'ZONING': visibleTools(['zone_dezone', 'zone_water', 'zone_land']),
   'UTILITIES': visibleTools(['power_plant', 'water_tower', 'subway_station', 'rail_station']),
   'SERVICES': visibleTools(['police_station', 'fire_station', 'hospital', 'school', 'university']),
   'PARKS': visibleTools(['park', 'park_large', 'tennis', 'playground_small', 'playground_large', 'community_garden', 'pond_park', 'park_gate', 'greenhouse_garden', 'mini_golf_course', 'go_kart_track', 'amphitheater', 'roller_coaster_small', 'campground', 'cabin_house', 'mountain_lodge', 'mountain_trailhead']),
@@ -249,11 +248,10 @@ interface MobileToolbarProps {
 }
 
 export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMode }: MobileToolbarProps) {
-  const { state, setTool, expandCity } = useGame();
+  const { state, setTool } = useGame();
   const { selectedTool, stats } = state;
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
-  const [expandCityExpanded, setExpandCityExpanded] = useState(false);
   const m = useMessages();
 
   const handleCategoryClick = (category: string) => {
@@ -296,12 +294,12 @@ export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMod
             </div>
           )}
 
-          <div className="flex items-center justify-around px-2 py-2 gap-1">
+          <div className="flex items-center justify-between px-1 py-2 gap-0.5">
             {/* Quick access tools */}
             <Button
               variant={selectedTool === 'select' ? 'default' : 'ghost'}
               size="icon"
-              className="h-11 w-11"
+              className="h-11 w-auto min-w-0 flex-1 max-w-11 px-0"
               onClick={() => handleToolSelect('select')}
             >
               {QuickToolIcons.select}
@@ -310,7 +308,7 @@ export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMod
             <Button
               variant={selectedTool === 'bulldoze' ? 'default' : 'ghost'}
               size="icon"
-              className="h-11 w-11 text-red-400"
+              className="h-11 w-auto min-w-0 flex-1 max-w-11 px-0 text-red-400"
               onClick={() => handleToolSelect('bulldoze')}
             >
               {QuickToolIcons.bulldoze}
@@ -319,7 +317,7 @@ export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMod
             <Button
               variant={selectedTool === 'road' ? 'default' : 'ghost'}
               size="icon"
-              className="h-11 w-11"
+              className="h-11 w-auto min-w-0 flex-1 max-w-11 px-0"
               onClick={() => handleToolSelect('road')}
             >
               {QuickToolIcons.road}
@@ -328,7 +326,7 @@ export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMod
             <Button
               variant={selectedTool === 'rail' ? 'default' : 'ghost'}
               size="icon"
-              className="h-11 w-11"
+              className="h-11 w-auto min-w-0 flex-1 max-w-11 px-0"
               onClick={() => handleToolSelect('rail')}
             >
               {QuickToolIcons.rail}
@@ -338,7 +336,7 @@ export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMod
             <Button
               variant={selectedTool === 'zone_residential' ? 'default' : 'ghost'}
               size="icon"
-              className="h-11 w-11"
+              className="h-11 w-auto min-w-0 flex-1 max-w-11 px-0"
               onClick={() => handleToolSelect('zone_residential')}
             >
               {QuickToolIcons.zone_residential}
@@ -347,7 +345,7 @@ export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMod
             <Button
               variant={selectedTool === 'zone_commercial' ? 'default' : 'ghost'}
               size="icon"
-              className="h-11 w-11"
+              className="h-11 w-auto min-w-0 flex-1 max-w-11 px-0"
               onClick={() => handleToolSelect('zone_commercial')}
             >
               {QuickToolIcons.zone_commercial}
@@ -356,7 +354,7 @@ export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMod
             <Button
               variant={selectedTool === 'zone_industrial' ? 'default' : 'ghost'}
               size="icon"
-              className="h-11 w-11"
+              className="h-11 w-auto min-w-0 flex-1 max-w-11 px-0"
               onClick={() => handleToolSelect('zone_industrial')}
             >
               {QuickToolIcons.zone_industrial}
@@ -366,7 +364,7 @@ export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMod
             <Button
               variant={showMenu ? 'default' : 'secondary'}
               size="icon"
-              className="h-11 w-11"
+              className="h-11 w-auto min-w-0 flex-1 max-w-11 px-0"
               onClick={() => setShowMenu(!showMenu)}
             >
               {showMenu ? (
@@ -511,40 +509,6 @@ export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMod
                 {/* Category buttons */}
                 {Object.entries(toolCategories).map(([category, tools]) => (
                   <div key={category}>
-                    {/* Expand City section - appears before ZONING */}
-                    {category === 'ZONING' && (
-                      <div className="mb-1">
-                        <Button
-                          variant={expandCityExpanded ? 'secondary' : 'ghost'}
-                          className="w-full justify-start gap-3 h-12"
-                          onClick={() => setExpandCityExpanded(!expandCityExpanded)}
-                        >
-                          <span className="flex-1 text-left font-medium">{m((CATEGORY_LABELS['EXPAND_CITY']) as Parameters<typeof m>[0])}</span>
-                          <svg
-                            className={`w-4 h-4 transition-transform ${expandCityExpanded ? 'rotate-180' : ''}`}
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                          >
-                            <path d="M6 9l6 6 6-6" />
-                          </svg>
-                        </Button>
-
-                        {/* Expand City actions */}
-                        {expandCityExpanded && (
-                          <div className="pl-4 py-1 space-y-0.5">
-                            <Button
-                              variant="ghost"
-                              className="w-full justify-start gap-3 h-11"
-                              onClick={() => { expandCity(); setShowMenu(false); }}
-                            >
-                              <span className="flex-1 text-left">{m(TOOL_INFO['expand_city'].name)}</span>
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    )}
 
                     <Button
                       variant={expandedCategory === category ? 'secondary' : 'ghost'}

@@ -463,7 +463,7 @@ function ExitDialog({
 
 // Memoized Sidebar Component
 export const Sidebar = React.memo(function Sidebar({ onExit }: { onExit?: () => void }) {
-  const { state, setTool, setActivePanel, saveCity, expandCity } = useGame();
+  const { state, setTool, setActivePanel, saveCity } = useGame();
   const { selectedTool, stats, activePanel } = state;
   const [showExitDialog, setShowExitDialog] = useState(false);
   const m = useMessages();
@@ -484,23 +484,6 @@ export const Sidebar = React.memo(function Sidebar({ onExit }: { onExit?: () => 
     'TOOLS': visibleTools(['select', 'bulldoze', 'road', 'rail', 'subway']),
     'ZONES': visibleTools(['zone_residential', 'zone_commercial', 'zone_industrial']),
   }), []);
-  
-  // Zoning submenu (shown under ZONES section, before BUILDINGS)
-  const zoningSubmenu = useMemo(() => ({
-    key: 'zoning',
-    label: CATEGORY_LABELS.zoning,
-    tools: visibleTools(['zone_dezone', 'zone_water', 'zone_land'])
-  }), []);
-  
-  // Expand City submenu (shown under TOOLS section)
-  const expandCityActions = useMemo(() => [
-    {
-      key: 'expand_city',
-      name: TOOL_INFO['expand_city'].name,
-      description: 'Add 15 tiles to each edge of the city',
-      onClick: expandCity,
-    },
-  ], [expandCity]);
   
   // Submenu categories (hover to expand) - includes all new assets from main
   const submenuCategories = useMemo(() => [
@@ -623,25 +606,6 @@ export const Sidebar = React.memo(function Sidebar({ onExit }: { onExit?: () => 
                   </Button>
                 );
               })}
-              {/* Expand City submenu - appears after TOOLS category */}
-              {category === 'TOOLS' && (
-                <ActionSubmenu
-                  key="expandCity"
-                  label={CATEGORY_LABELS.expandCity}
-                  actions={expandCityActions}
-                />
-              )}
-              {/* Zoning submenu - appears after ZONES category */}
-              {category === 'ZONES' && (
-                <HoverSubmenu
-                  key={zoningSubmenu.key}
-                  label={zoningSubmenu.label}
-                  tools={zoningSubmenu.tools}
-                  selectedTool={selectedTool}
-                  money={stats.money}
-                  onSelectTool={setTool}
-                />
-              )}
             </div>
           </div>
         ))}

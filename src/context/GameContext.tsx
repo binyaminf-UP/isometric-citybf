@@ -955,6 +955,12 @@ export function GameProvider({ children, startFresh = false }: { children: React
         };
       }
 
+      // After placing a single building, go back to the select tool.
+      // Roads, rail, trees, zones and bulldoze stay selected (they are placed repeatedly).
+      if (building && tool !== 'road' && tool !== 'rail' && tool !== 'tree') {
+        nextState = { ...nextState, selectedTool: 'select' };
+      }
+
       return nextState;
     });
   }, []);
