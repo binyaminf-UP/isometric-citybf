@@ -4,7 +4,7 @@
 
 import { msg } from '@/i18n';
 import { Building } from './buildings';
-import { ZoneType } from './zones';
+import { ZoneType, ResidentialDensity } from './zones';
 import { Stats, Budget, CityEconomy, HistoryPoint } from './economy';
 import { ServiceCoverage } from './services';
 
@@ -98,6 +98,8 @@ export interface Tile {
   x: number;
   y: number;
   zone: ZoneType;
+  /** Residential designation (ceiling). Only meaningful when zone === 'residential'. */
+  zoneDensity?: ResidentialDensity;
   building: Building;
   landValue: number;
   pollution: number;
@@ -173,6 +175,8 @@ export interface GameState {
   waterBodies: WaterBody[];
   gameVersion: number;
   cities: City[];
+  /** Density chosen in the residential zoning tool */
+  selectedZoneDensity?: ResidentialDensity;
 }
 
 export interface SavedCityMeta {

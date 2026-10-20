@@ -4,6 +4,7 @@ import { visibleTools } from '@/lib/hiddenTools';
 import React, { useState } from 'react';
 import { msg, useMessages } from '@/i18n';
 import { useGame } from '@/context/GameContext';
+import { ZoneDensityPicker } from '@/components/game/ZoneDensityPicker';
 import { Tool, TOOL_INFO } from '@/types/game';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -239,7 +240,7 @@ const PUBLIC_TABS: { key: string; label: unknown; tools: Tool[] }[] = [
 
 type PickerId = 'infra' | 'public';
 
-type OverlayMode = 'none' | 'power' | 'water' | 'fire' | 'police' | 'health' | 'education' | 'subway';
+type OverlayMode = 'none' | 'power' | 'water' | 'fire' | 'police' | 'health' | 'education' | 'subway' | 'zoning';
 
 interface MobileToolbarProps {
   onOpenPanel: (panel: 'budget' | 'statistics' | 'advisors' | 'settings') => void;
@@ -290,6 +291,13 @@ export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMod
                   ${TOOL_INFO[selectedTool].cost}
                 </span>
               )}
+            </div>
+          )}
+
+          {/* Residential designation picker */}
+          {selectedTool === 'zone_residential' && (
+            <div className="border-b border-sidebar-border/50">
+              <ZoneDensityPicker compact />
             </div>
           )}
 
@@ -561,6 +569,14 @@ export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMod
                     onClick={() => setOverlayMode('subway')}
                   >
                     {m(UI_LABELS.subway)}
+                  </Button>
+                  <Button
+                    variant={overlayMode === 'zoning' ? 'default' : 'ghost'}
+                    size="sm"
+                    className={`h-10 w-full text-xs ${overlayMode === 'zoning' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}
+                    onClick={() => setOverlayMode('zoning')}
+                  >
+                    {m(msg('Zoning'))}
                   </Button>
                 </div>
               </div>

@@ -383,4 +383,16 @@ export const he: Record<string, string> = {
   'park gate': 'שער פארק',
   'mountain lodge': 'בקתת הרים',
   'mountain trailhead': 'תחילת שביל',
+
+  // ייעוד מגורים
+  'Designation': 'ייעוד',
+  'Coming soon': 'בקרוב',
+  'Tap built-up residential tiles to change their designation': 'הקשה על משבצת מגורים קיימת משנה את הייעוד שלה',
+  'Re-zoning cost per tile': 'עלות שינוי ייעוד למשבצת',
+  'Single-family': 'בית יחיד',
+  'Townhouses': 'בתים טוריים',
+  'Homes over shops': 'מגורים מעל מסחר',
+  'Multi-story': 'רב-קומות',
+  'Tower by station': 'מגדל ליד תחנה',
+  'Residential Zoning': 'ייעוד מגורים',
 };

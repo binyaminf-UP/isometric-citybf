@@ -5,6 +5,7 @@ import { APP_NAME } from '@/lib/appInfo';
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { msg, useMessages, translate } from '@/i18n';
 import { useGame } from '@/context/GameContext';
+import { ZoneDensityPicker } from './ZoneDensityPicker';
 import { Tool, TOOL_INFO } from '@/types/game';
 
 // Translatable category labels
@@ -607,6 +608,7 @@ export const Sidebar = React.memo(function Sidebar({ onExit }: { onExit?: () => 
                 );
               })}
             </div>
+            {category === 'ZONES' && selectedTool === 'zone_residential' && <ZoneDensityPicker />}
           </div>
         ))}
         

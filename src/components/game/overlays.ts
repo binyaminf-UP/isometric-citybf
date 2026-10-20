@@ -5,6 +5,7 @@
 
 import { Tile } from '@/types/game';
 import { OverlayMode } from './types';
+import { DENSITY_INFO, getZoneDensity, exceedsDensity } from '@/transit/zoning';
 
 // ============================================================================
 // Types
@@ -84,6 +85,12 @@ export const OVERLAY_CONFIG: Record<OverlayMode, OverlayConfig> = {
     activeColor: 'bg-yellow-500',
     hoverColor: 'hover:bg-yellow-600',
   },
+  zoning: {
+    label: 'Zoning',
+    title: 'Residential Zoning',
+    activeColor: 'bg-emerald-600',
+    hoverColor: 'hover:bg-emerald-700',
+  },
 };
 
 /** Map of building tools to their corresponding overlay mode */
@@ -97,6 +104,7 @@ export const TOOL_TO_OVERLAY_MAP: Record<string, OverlayMode> = {
   university: 'education',
   subway_station: 'subway',
   subway: 'subway',
+  zone_residential: 'zoning',
 };
 
 /** Get the button class name for an overlay button */
@@ -122,6 +130,9 @@ function tileNeedsCoverage(tile: Tile): boolean {
 
 /** Warning color for uncovered buildings */
 const UNCOVERED_WARNING = 'rgba(239, 68, 68, 0.45)'; // Red tint
+
+/** Zoning overlay: building above its designation */
+const NON_CONFORMING_COLOR = 'rgba(127, 29, 29, 0.7)';
 
 /** No overlay needed (transparent) */
 const NO_OVERLAY = 'rgba(0, 0, 0, 0)';
@@ -184,6 +195,13 @@ export function getOverlayFillStyle(
         ? 'rgba(245, 158, 11, 0.7)'  // Bright amber for existing subway
         : 'rgba(40, 30, 20, 0.4)';   // Dark brown tint for "underground" view
 
+    case 'zoning': {
+      if (tile.zone !== 'residential') return NO_OVERLAY;
+      // Building larger than its designation (existing rights after down-zoning)
+      if (exceedsDensity(getZoneDensity(tile), tile.building.type)) return NON_CONFORMING_COLOR;
+      return DENSITY_INFO[getZoneDensity(tile)].color;
+    }
+
     case 'none':
     default:
       return NO_OVERLAY;
@@ -200,7 +218,7 @@ export function getOverlayForTool(tool: string): OverlayMode {
 
 /** List of all overlay modes (for iteration) */
 export const OVERLAY_MODES: OverlayMode[] = [
-  'none', 'power', 'water', 'fire', 'police', 'health', 'education', 'subway'
+  'none', 'power', 'water', 'fire', 'police', 'health', 'education', 'subway', 'zoning'
 ];
 
 // ============================================================================
@@ -217,6 +235,7 @@ export const OVERLAY_TO_BUILDING_TYPES: Record<OverlayMode, string[]> = {
   health: ['hospital'],
   education: ['school', 'university'],
   subway: ['subway_station'],
+  zoning: [],
 };
 
 /** Overlay circle stroke colors (light/visible colors) */
@@ -229,6 +248,7 @@ export const OVERLAY_CIRCLE_COLORS: Record<OverlayMode, string> = {
   health: 'rgba(134, 239, 172, 0.8)',  // Light green
   education: 'rgba(196, 181, 253, 0.8)', // Light purple
   subway: 'rgba(253, 224, 71, 0.8)',   // Yellow
+  zoning: 'transparent',
 };
 
 /** Building highlight glow colors */
@@ -241,6 +261,7 @@ export const OVERLAY_HIGHLIGHT_COLORS: Record<OverlayMode, string> = {
   health: 'rgba(34, 197, 94, 1)',      // Green
   education: 'rgba(168, 85, 247, 1)',  // Purple
   subway: 'rgba(234, 179, 8, 1)',      // Yellow
+  zoning: 'transparent',
 };
 
 /** Overlay circle fill colors (subtle, for area visibility) */
@@ -253,4 +274,5 @@ export const OVERLAY_CIRCLE_FILL_COLORS: Record<OverlayMode, string> = {
   health: 'rgba(134, 239, 172, 0.12)',
   education: 'rgba(196, 181, 253, 0.12)',
   subway: 'rgba(253, 224, 71, 0.12)',
+  zoning: 'transparent',
 };

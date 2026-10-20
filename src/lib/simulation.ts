@@ -1,5 +1,7 @@
 // Simulation engine for IsoCity
 
+import { getZoneDensity, getResidentialLadder, migrateZoneDensity, isAllowedInDensity, exceedsDensity, residentialRank } from '@/transit/zoning';
+import type { ResidentialDensity } from '@/games/isocity/types/zones';
 import {
   GameState,
   Tile,
@@ -17,7 +19,6 @@ import {
   BridgeType,
   BridgeOrientation,
   BUILDING_STATS,
-  RESIDENTIAL_BUILDINGS,
   COMMERCIAL_BUILDINGS,
   INDUSTRIAL_BUILDINGS,
   TOOL_INFO,
@@ -1642,9 +1643,13 @@ function evolveBuilding(grid: Tile[][], x: number, y: number, services: ServiceC
   building.age = (building.age || 0) + 1;
 
   // Determine target building based on zone and conditions
-  const buildingList = zone === 'residential' ? RESIDENTIAL_BUILDINGS :
+  // Residential: the player's designation (zoneDensity) is a binding ceiling
+  const density: ResidentialDensity | null = zone === 'residential' ? getZoneDensity(tile) : null;
+  const buildingList = density ? getResidentialLadder(density) :
     zone === 'commercial' ? COMMERCIAL_BUILDINGS :
     zone === 'industrial' ? INDUSTRIAL_BUILDINGS : [];
+  // Larger than the designation allows (after down-zoning): kept as existing rights, never rebuilt
+  const isNonConforming = density !== null && exceedsDensity(density, building.type);
 
   // Calculate level based on land value, services, and demand
   const serviceCoverage = (
@@ -1717,9 +1722,30 @@ function evolveBuilding(grid: Tile[][], x: number, y: number, services: ServiceC
   // because consolidation upgrades buildings to larger types that need utilities
   const ageRequirement = 12;
   const hasUtilitiesForConsolidation = hasPower && hasWater;
-  if (hasUtilitiesForConsolidation && building.age > ageRequirement && (targetLevel > building.level || targetType !== building.type) && Math.random() < consolidationChance) {
+  if (!isNonConforming && hasUtilitiesForConsolidation && building.age > ageRequirement && (targetLevel > building.level || targetType !== building.type) && Math.random() < consolidationChance) {
     const size = getBuildingSize(targetType);
-    const footprint = findFootprintIncludingTile(grid, x, y, size.width, size.height, zone, grid.length, allowBuildingConsolidation);
+    // Every tile of the new footprint must allow the target type under its own designation
+    const densityFilter = density
+      ? (t: Tile) => isAllowedInDensity(getZoneDensity(t), targetType)
+      : undefined;
+    let footprint = findFootprintIncludingTile(grid, x, y, size.width, size.height, zone, grid.length, allowBuildingConsolidation, densityFilter);
+    // Same-size upgrade in place (e.g. mansion -> apartment after up-zoning): the existing
+    // placeholders are this building's own, so the footprint is the building itself
+    if (!footprint && density) {
+      const currentSize = getBuildingSize(building.type);
+      if (currentSize.width === size.width && currentSize.height === size.height && (size.width > 1 || size.height > 1) &&
+          residentialRank(targetType) > residentialRank(building.type)) {
+        let ok = true;
+        for (let dy = 0; dy < size.height && ok; dy++) {
+          for (let dx = 0; dx < size.width && ok; dx++) {
+            const t = grid[y + dy]?.[x + dx];
+            if (!t || t.zone !== zone || !densityFilter!(t)) ok = false;
+            else if ((dx > 0 || dy > 0) && t.building.type !== 'empty') ok = false;
+          }
+        }
+        if (ok) footprint = { originX: x, originY: y };
+      }
+    }
 
     if (footprint) {
       const anchor = applyBuildingFootprint(grid, footprint.originX, footprint.originY, targetType, zone, targetLevel, services);
@@ -2274,7 +2300,7 @@ export function simulateTick(state: GameState): GameState {
         const spawnChance = baseSpawnChance * demandFactor;
 
         // Starter buildings (house_small, shop_small, farms) can spawn without power/water
-        const buildingList = tile.zone === 'residential' ? RESIDENTIAL_BUILDINGS :
+        const buildingList = tile.zone === 'residential' ? getResidentialLadder(getZoneDensity(tile)) :
           tile.zone === 'commercial' ? COMMERCIAL_BUILDINGS : INDUSTRIAL_BUILDINGS;
         const candidate = buildingList[0];
         const wouldBeStarter = isStarterBuilding(x, y, candidate);
@@ -2655,7 +2681,8 @@ function footprintAvailable(
   zone: ZoneType,
   gridSize: number,
   excludeTile?: { x: number; y: number },
-  allowBuildingConsolidation?: boolean
+  allowBuildingConsolidation?: boolean,
+  tileFilter?: (tile: Tile) => boolean
 ): boolean {
   if (originX < 0 || originY < 0 || originX + width > gridSize || originY + height > gridSize) {
     return false;
@@ -2665,6 +2692,9 @@ function footprintAvailable(
     for (let dx = 0; dx < width; dx++) {
       const tile = grid[originY + dy][originX + dx];
       if (!isMergeableZoneTile(tile, zone, excludeTile, allowBuildingConsolidation)) {
+        return false;
+      }
+      if (tileFilter && !tileFilter(tile)) {
         return false;
       }
     }
@@ -2711,7 +2741,8 @@ function findFootprintIncludingTile(
   height: number,
   zone: ZoneType,
   gridSize: number,
-  allowBuildingConsolidation?: boolean
+  allowBuildingConsolidation?: boolean,
+  tileFilter?: (tile: Tile) => boolean
 ): { originX: number; originY: number } | null {
   const candidates: { originX: number; originY: number; score: number }[] = [];
   // The tile at (x, y) is the one being upgraded, so it should be excluded from the "can't merge existing buildings" check
@@ -2719,7 +2750,7 @@ function findFootprintIncludingTile(
 
   for (let oy = y - (height - 1); oy <= y; oy++) {
     for (let ox = x - (width - 1); ox <= x; ox++) {
-      if (!footprintAvailable(grid, ox, oy, width, height, zone, gridSize, excludeTile, allowBuildingConsolidation)) continue;
+      if (!footprintAvailable(grid, ox, oy, width, height, zone, gridSize, excludeTile, allowBuildingConsolidation, tileFilter)) continue;
       if (x < ox || x >= ox + width || y < oy || y >= oy + height) continue;
 
       const score = scoreFootprint(grid, ox, oy, width, height, gridSize);
@@ -2773,7 +2804,8 @@ export function placeBuilding(
   x: number,
   y: number,
   buildingType: BuildingType | null,
-  zone: ZoneType | null
+  zone: ZoneType | null,
+  zoneDensity?: ResidentialDensity
 ): GameState {
   const tile = state.grid[y]?.[x];
   if (!tile) return state;
@@ -2825,6 +2857,7 @@ export function placeBuilding(
             if (clearX < state.gridSize && clearY < state.gridSize) {
               newGrid[clearY][clearX].building = createBuilding('grass');
               newGrid[clearY][clearX].zone = 'none';
+              newGrid[clearY][clearX].zoneDensity = undefined;
             }
           }
         }
@@ -2835,6 +2868,7 @@ export function placeBuilding(
         }
         // De-zoning resets to grass
         newGrid[y][x].zone = 'none';
+        newGrid[y][x].zoneDensity = undefined;
         newGrid[y][x].building = createBuilding('grass');
       }
     } else {
@@ -2846,6 +2880,7 @@ export function placeBuilding(
       }
       // Setting zone
       newGrid[y][x].zone = zone;
+      newGrid[y][x].zoneDensity = zone === 'residential' ? (zoneDensity ?? 'single') : undefined;
     }
   } else if (buildingType) {
     const size = getBuildingSize(buildingType);
@@ -2914,6 +2949,43 @@ export function placeBuilding(
     // sides of water should not automatically create a bridge - only explicit dragging should
   }
 
+  return { ...state, grid: newGrid };
+}
+
+/**
+ * Change the residential designation (zoneDensity) of an already-zoned residential tile.
+ * Applies to the whole footprint of a multi-tile building. Buildings are not touched:
+ * up-zoning only allows future growth, down-zoning leaves larger buildings as existing rights.
+ * Returns the same state object when nothing changes.
+ */
+export function rezoneResidential(state: GameState, x: number, y: number, density: ResidentialDensity): GameState {
+  const tile = state.grid[y]?.[x];
+  if (!tile || tile.zone !== 'residential') return state;
+
+  const cells: { x: number; y: number }[] = [];
+  const origin = findBuildingOrigin(state.grid, x, y, state.gridSize);
+  if (origin) {
+    const size = getBuildingSize(origin.buildingType);
+    for (let dy = 0; dy < size.height; dy++) {
+      for (let dx = 0; dx < size.width; dx++) {
+        cells.push({ x: origin.originX + dx, y: origin.originY + dy });
+      }
+    }
+  } else {
+    cells.push({ x, y });
+  }
+
+  const targets = cells.filter(c => {
+    const t = state.grid[c.y]?.[c.x];
+    return t && t.zone === 'residential' && getZoneDensity(t) !== density;
+  });
+  if (targets.length === 0) return state;
+
+  const rows = new Set(targets.map(c => c.y));
+  const newGrid = state.grid.map((row, ry) => rows.has(ry) ? row.map(t => ({ ...t })) : row);
+  for (const c of targets) {
+    newGrid[c.y][c.x].zoneDensity = density;
+  }
   return { ...state, grid: newGrid };
 }
 
@@ -3535,6 +3607,9 @@ export function generateRandomAdvancedCity(size: number = DEFAULT_GRID_SIZE, cit
     }
   }
   
+  // Residential designation follows the generated buildings
+  migrateZoneDensity(grid);
+
   // Create the final state
   return {
     ...baseState,
@@ -3616,7 +3691,7 @@ export function getDevelopmentBlockers(
   }
   
   // Check if multi-tile building can spawn here
-  const buildingList = tile.zone === 'residential' ? RESIDENTIAL_BUILDINGS :
+  const buildingList = tile.zone === 'residential' ? getResidentialLadder(getZoneDensity(tile)) :
     tile.zone === 'commercial' ? COMMERCIAL_BUILDINGS : INDUSTRIAL_BUILDINGS;
   const candidate = buildingList[0];
   

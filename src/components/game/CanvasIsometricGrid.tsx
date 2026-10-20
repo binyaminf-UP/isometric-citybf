@@ -1749,7 +1749,9 @@ export function CanvasIsometricGrid({ overlayMode, selectedTile, setSelectedTile
         // For other overlays, show buildings only
         const showOverlay =
           overlayMode !== 'none' &&
-          (overlayMode === 'subway' 
+          (overlayMode === 'zoning'
+            ? tile.zone === 'residential'  // Zoning plan: every residential tile, built or not
+            : overlayMode === 'subway' 
             ? tile.building.type !== 'water'  // For subway mode, show all non-water tiles
             : (tile.building.type !== 'grass' &&
                tile.building.type !== 'water' &&

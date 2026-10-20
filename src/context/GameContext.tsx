@@ -29,7 +29,11 @@ import {
   generateRandomAdvancedCity,
   createBridgesOnPath,
   upgradeServiceBuilding,
+  rezoneResidential,
 } from '@/lib/simulation';
+import { migrateZoneDensity, sanitizeDensity } from '@/transit/zoning';
+import { REZONE_COST_PER_TILE } from '@/transit/balance';
+import type { ResidentialDensity } from '@/games/isocity/types/zones';
 import {
   SPRITE_PACKS,
   DEFAULT_SPRITE_PACK_ID,
@@ -61,6 +65,8 @@ type GameContextValue = {
   // Canvas should use this instead of state.grid for smooth updates
   latestStateRef: React.RefObject<GameState>;
   setTool: (tool: Tool) => void;
+  /** Designation used by the residential zoning tool */
+  setZoneDensity: (density: ResidentialDensity) => void;
   setSpeed: (speed: 0 | 1 | 2 | 3) => void;
   setTaxRate: (rate: number) => void;
   setActivePanel: (panel: GameState['activePanel']) => void;
@@ -277,6 +283,8 @@ function loadGameState(): GameState | null {
             }
           }
         }
+        // Residential designation (zoneDensity) from the buildings already there
+        migrateZoneDensity(parsed.grid);
         // Ensure gameVersion exists for backward compatibility
         if (parsed.gameVersion === undefined) {
           parsed.gameVersion = 0;
@@ -836,6 +844,10 @@ export function GameProvider({ children, startFresh = false }: { children: React
     setState((prev) => ({ ...prev, selectedTool: tool, activePanel: 'none' }));
   }, []);
 
+  const setZoneDensity = useCallback((density: ResidentialDensity) => {
+    setState((prev) => ({ ...prev, selectedZoneDensity: sanitizeDensity(density) }));
+  }, []);
+
   const setSpeed = useCallback((speed: 0 | 1 | 2 | 3) => {
     setState((prev) => ({ ...prev, speed }));
   }, []);
@@ -884,6 +896,18 @@ export function GameProvider({ children, startFresh = false }: { children: React
 
       const building = toolBuildingMap[tool];
       const zone = toolZoneMap[tool];
+
+      // Residential tool on an already-residential tile = change its designation (re-zoning)
+      if (zone === 'residential' && tile.zone === 'residential') {
+        if (prev.stats.money < REZONE_COST_PER_TILE) return prev;
+        const density = sanitizeDensity(prev.selectedZoneDensity);
+        const rezoned = rezoneResidential(prev, x, y, density);
+        if (rezoned === prev) return prev;
+        return {
+          ...rezoned,
+          stats: { ...rezoned.stats, money: rezoned.stats.money - REZONE_COST_PER_TILE },
+        };
+      }
 
       if (zone && tile.zone === zone) return prev;
       if (building && tile.building.type === building) return prev;
@@ -939,7 +963,7 @@ export function GameProvider({ children, startFresh = false }: { children: React
       if (tool === 'bulldoze') {
         nextState = bulldozeTile(prev, x, y);
       } else if (zone) {
-        nextState = placeBuilding(prev, x, y, null, zone);
+        nextState = placeBuilding(prev, x, y, null, zone, zone === 'residential' ? sanitizeDensity(prev.selectedZoneDensity) : undefined);
       } else if (building) {
         nextState = placeBuilding(prev, x, y, building, null);
       } else {
@@ -1179,6 +1203,7 @@ export function GameProvider({ children, startFresh = false }: { children: React
             }
           }
         }
+        migrateZoneDensity(parsed.grid);
         // Increment gameVersion to clear vehicles/entities when loading a new state
         setState((prev) => ({
           ...(parsed as GameState),
@@ -1557,6 +1582,8 @@ export function GameProvider({ children, startFresh = false }: { children: React
       }
     }
     
+    if (cityState.grid) migrateZoneDensity(cityState.grid);
+
     skipNextSaveRef.current = true;
     setState((prev) => ({
       ...cityState,
@@ -1610,6 +1637,7 @@ export function GameProvider({ children, startFresh = false }: { children: React
     state,
     latestStateRef,
     setTool,
+    setZoneDensity,
     setSpeed,
     setTaxRate,
     setActivePanel,
