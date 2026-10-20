@@ -71,6 +71,7 @@ import {
 } from '@/components/game/gridFinders';
 import { drawAirplanes as drawAirplanesUtil, drawHelicopters as drawHelicoptersUtil, drawSeaplanes as drawSeaplanesUtil } from '@/components/game/drawAircraft';
 import { useVehicleSystems, VehicleSystemRefs, VehicleSystemState } from '@/components/game/vehicleSystems';
+import { drawTransit, BusDisplayMap } from '@/components/game/transitDrawing';
 import { useBuildingHelpers } from '@/components/game/buildingHelpers';
 import { useAircraftSystems, AircraftSystemRefs, AircraftSystemState } from '@/components/game/aircraftSystems';
 import { useBargeSystem, BargeSystemRefs, BargeSystemState } from '@/components/game/bargeSystem';
@@ -166,6 +167,8 @@ export function CanvasIsometricGrid({ overlayMode, selectedTile, setSelectedTile
   const carIdRef = useRef(0);
   const carSpawnTimerRef = useRef(0);
   const busesRef = useRef<Bus[]>([]);
+  // Real transit buses: smoothed display positions
+  const busDisplayRef = useRef<BusDisplayMap>(new Map());
   const busIdRef = useRef(0);
   const busSpawnTimerRef = useRef(0);
   const emergencyVehiclesRef = useRef<EmergencyVehicle[]>([]);
@@ -299,7 +302,8 @@ export function CanvasIsometricGrid({ overlayMode, selectedTile, setSelectedTile
   const showsDragGrid = ['zone_residential', 'zone_commercial', 'zone_industrial', 'zone_dezone'].includes(selectedTool);
   
   // Roads, bulldoze, and other tools support drag-to-place but don't show the grid
-  const supportsDragPlace = selectedTool !== 'select';
+  // Bus line: one stop per tap, no drag
+  const supportsDragPlace = selectedTool !== 'select' && selectedTool !== 'bus_line';
 
   const PAN_DRAG_THRESHOLD = 6;
 
@@ -2454,7 +2458,7 @@ export function CanvasIsometricGrid({ overlayMode, selectedTile, setSelectedTile
       
       if (delta > 0 && !skipMobileUpdates) {
         updateCars(delta);
-        updateBuses(delta);
+        // Cosmetic random buses are replaced by the real transit system (src/transit)
         spawnCrimeIncidents(delta); // Spawn new crime incidents
         updateCrimeIncidents(delta); // Update/decay crime incidents
         updateEmergencyVehicles(delta); // Update emergency vehicles!
@@ -2516,7 +2520,7 @@ export function CanvasIsometricGrid({ overlayMode, selectedTile, setSelectedTile
         clearAirCanvas();
       } else {
         drawCars(ctx);
-        drawBuses(ctx);
+        drawTransit(ctx, latestStateRef.current?.transit, worldStateRef.current.offset, worldStateRef.current.zoom, busDisplayRef.current, delta);
         if (!skipSmallElements) {
           drawBoats(ctx); // Draw boats on water (skip when panning zoomed out on desktop)
         }
@@ -2614,6 +2618,9 @@ export function CanvasIsometricGrid({ overlayMode, selectedTile, setSelectedTile
           setDragStartTile({ x: gridX, y: gridY });
           setDragEndTile({ x: gridX, y: gridY });
           setIsDragging(true);
+        } else if (selectedTool === 'bus_line') {
+          panCandidateRef.current = null;
+          placeAtTile(gridX, gridY);
         } else if (supportsDragPlace) {
           panCandidateRef.current = null;
           // For roads, bulldoze, and other tools, start drag-to-place

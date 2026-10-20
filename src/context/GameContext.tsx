@@ -32,7 +32,8 @@ import {
   rezoneResidential,
 } from '@/lib/simulation';
 import { migrateZoneDensity, sanitizeDensity } from '@/transit/zoning';
-import { REZONE_COST_PER_TILE } from '@/transit/balance';
+import { REZONE_COST_PER_TILE, BUS_PRICE } from '@/transit/balance';
+import { ensureTransit, addDraftStop, undoDraftStop, cancelDraft, finalizeDraft, draftCost, changeBuses, deleteLine, shiftTransit } from '@/transit/lines';
 import type { ResidentialDensity } from '@/games/isocity/types/zones';
 import {
   SPRITE_PACKS,
@@ -67,6 +68,12 @@ type GameContextValue = {
   setTool: (tool: Tool) => void;
   /** Designation used by the residential zoning tool */
   setZoneDensity: (density: ResidentialDensity) => void;
+  /** Bus lines */
+  finishLineDraft: () => boolean;
+  undoLineStop: () => void;
+  cancelLineDraft: () => void;
+  changeLineBuses: (lineId: number, delta: number) => void;
+  removeLine: (lineId: number) => void;
   setSpeed: (speed: 0 | 1 | 2 | 3) => void;
   setTaxRate: (rate: number) => void;
   setActivePanel: (panel: GameState['activePanel']) => void;
@@ -841,7 +848,52 @@ export function GameProvider({ children, startFresh = false }: { children: React
   }, [state.speed]);
 
   const setTool = useCallback((tool: Tool) => {
-    setState((prev) => ({ ...prev, selectedTool: tool, activePanel: 'none' }));
+    setState((prev) => ({
+      ...prev,
+      selectedTool: tool,
+      activePanel: 'none',
+      // Leaving the bus-line tool drops an unfinished line
+      transit: tool !== 'bus_line' && prev.transit?.draft ? cancelDraft(prev.transit) : prev.transit,
+    }));
+  }, []);
+
+  const finishLineDraft = useCallback((): boolean => {
+    let ok = false;
+    setState((prev) => {
+      const t = ensureTransit(prev.transit);
+      const cost = draftCost(t);
+      if (!t.draft || prev.stats.money < cost) return prev;
+      const next = finalizeDraft(t);
+      if (!next) return prev;
+      ok = true;
+      return { ...prev, transit: next, stats: { ...prev.stats, money: prev.stats.money - cost } };
+    });
+    return ok;
+  }, []);
+
+  const undoLineStop = useCallback(() => {
+    setState((prev) => (prev.transit?.draft ? { ...prev, transit: undoDraftStop(prev.transit) } : prev));
+  }, []);
+
+  const cancelLineDraft = useCallback(() => {
+    setState((prev) => (prev.transit?.draft ? { ...prev, transit: cancelDraft(prev.transit) } : prev));
+  }, []);
+
+  const changeLineBuses = useCallback((lineId: number, delta: number) => {
+    setState((prev) => {
+      if (delta > 0 && prev.stats.money < BUS_PRICE * delta) return prev;
+      const r = changeBuses(ensureTransit(prev.transit), lineId, delta);
+      if (r.transit === prev.transit) return prev;
+      return { ...prev, transit: r.transit, stats: { ...prev.stats, money: prev.stats.money + r.money } };
+    });
+  }, []);
+
+  const removeLine = useCallback((lineId: number) => {
+    setState((prev) => {
+      const r = deleteLine(ensureTransit(prev.transit), lineId);
+      if (r.transit === prev.transit) return prev;
+      return { ...prev, transit: r.transit, stats: { ...prev.stats, money: prev.stats.money + r.money } };
+    });
   }, []);
 
   const setZoneDensity = useCallback((density: ResidentialDensity) => {
@@ -896,6 +948,12 @@ export function GameProvider({ children, startFresh = false }: { children: React
 
       const building = toolBuildingMap[tool];
       const zone = toolZoneMap[tool];
+
+      // Bus line tool: add a stop to the line being drawn
+      if (tool === 'bus_line') {
+        const t = addDraftStop(ensureTransit(prev.transit), prev.grid, prev.gridSize, x, y);
+        return t === prev.transit ? prev : { ...prev, transit: t };
+      }
 
       // Residential tool on an already-residential tile = change its designation (re-zoning)
       if (zone === 'residential' && tile.zone === 'residential') {
@@ -1315,6 +1373,7 @@ export function GameProvider({ children, startFresh = false }: { children: React
           maxX: newSize - 1,
           maxY: newSize - 1,
         },
+        transit: shiftTransit(prev.transit, 15, newSize),
         // Increment game version to reset vehicles/entities
         gameVersion: (prev.gameVersion ?? 0) + 1,
       };
@@ -1414,6 +1473,7 @@ export function GameProvider({ children, startFresh = false }: { children: React
           maxX: newSize - 1,
           maxY: newSize - 1,
         },
+        transit: shiftTransit(prev.transit, -15, newSize),
         // Increment game version to reset vehicles/entities
         gameVersion: (prev.gameVersion ?? 0) + 1,
       };
@@ -1638,6 +1698,11 @@ export function GameProvider({ children, startFresh = false }: { children: React
     latestStateRef,
     setTool,
     setZoneDensity,
+    finishLineDraft,
+    undoLineStop,
+    cancelLineDraft,
+    changeLineBuses,
+    removeLine,
     setSpeed,
     setTaxRate,
     setActivePanel,

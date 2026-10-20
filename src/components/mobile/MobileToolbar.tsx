@@ -331,6 +331,20 @@ export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMod
             </Button>
 
             <Button
+              variant={selectedTool === 'bus_line' ? 'default' : 'ghost'}
+              size="icon"
+              className="h-11 w-auto min-w-0 flex-1 max-w-11 px-0"
+              onClick={() => handleToolSelect('bus_line')}
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="5" y="3" width="14" height="15" rx="2" />
+                <path d="M5 11h14M8 21v-3M16 21v-3" />
+                <circle cx="8.5" cy="14.5" r="0.8" fill="currentColor" />
+                <circle cx="15.5" cy="14.5" r="0.8" fill="currentColor" />
+              </svg>
+            </Button>
+
+            <Button
               variant={picker === 'infra' || INFRA_TOOLS.includes(selectedTool) ? 'default' : 'ghost'}
               size="icon"
               className="h-11 w-auto min-w-0 flex-1 max-w-11 px-0"

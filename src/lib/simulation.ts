@@ -2,6 +2,8 @@
 
 import { getZoneDensity, getResidentialLadder, migrateZoneDensity, isAllowedInDensity, exceedsDensity, residentialRank } from '@/transit/zoning';
 import type { ResidentialDensity } from '@/games/isocity/types/zones';
+import { stepTransit } from '@/transit/sim';
+import { ensureTransit } from '@/transit/lines';
 import {
   GameState,
   Tile,
@@ -2489,6 +2491,13 @@ export function simulateTick(state: GameState): GameState {
     newYear++;
   }
 
+  // Public transit: demand, congestion, buses, fares and upkeep
+  const transitStep = stepTransit(ensureTransit(state.transit), newGrid, size, newHour, state.id);
+  const carry = (transitStep.transit.moneyCarry ?? 0) + transitStep.money;
+  const wholeMoney = Math.trunc(carry);
+  newStats.money += wholeMoney;
+  const newTransit = { ...transitStep.transit, moneyCarry: carry - wholeMoney };
+
   // Generate advisor messages
   const advisorMessages = generateAdvisorMessages(newStats, services, newGrid);
 
@@ -2531,6 +2540,7 @@ export function simulateTick(state: GameState): GameState {
     advisorMessages,
     notifications: newNotifications,
     history,
+    transit: newTransit,
   };
 }
 

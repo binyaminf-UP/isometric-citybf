@@ -482,7 +482,7 @@ export const Sidebar = React.memo(function Sidebar({ onExit }: { onExit?: () => 
   
   // Direct tool categories (shown inline)
   const directCategories = useMemo(() => ({
-    'TOOLS': visibleTools(['select', 'bulldoze', 'road', 'rail', 'subway']),
+    'TOOLS': visibleTools(['select', 'bulldoze', 'road', 'bus_line', 'rail', 'subway']),
     'ZONES': visibleTools(['zone_residential', 'zone_commercial', 'zone_industrial']),
   }), []);
   

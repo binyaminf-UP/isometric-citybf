@@ -5,6 +5,7 @@
 import { msg } from '@/i18n';
 import { Building } from './buildings';
 import { ZoneType, ResidentialDensity } from './zones';
+import type { TransitState } from '@/transit/types';
 import { Stats, Budget, CityEconomy, HistoryPoint } from './economy';
 import { ServiceCoverage } from './services';
 
@@ -12,7 +13,7 @@ export type Tool =
   | 'select' | 'bulldoze' | 'road' | 'rail' | 'subway'
   | 'expand_city' | 'shrink_city' | 'tree'
   | 'zone_residential' | 'zone_commercial' | 'zone_industrial' | 'zone_dezone'
-  | 'zone_water' | 'zone_land'
+  | 'zone_water' | 'zone_land' | 'bus_line'
   | 'police_station' | 'fire_station' | 'hospital' | 'school' | 'university'
   | 'park' | 'park_large' | 'tennis' | 'power_plant' | 'water_tower'
   | 'subway_station' | 'rail_station' | 'stadium' | 'museum' | 'airport'
@@ -45,6 +46,7 @@ export const TOOL_INFO: Record<Tool, ToolInfo> = {
   zone_commercial: { name: msg('Commercial'), cost: 50, description: msg('Zone for shops and offices') },
   zone_industrial: { name: msg('Industrial'), cost: 50, description: msg('Zone for factories') },
   zone_dezone: { name: msg('De-zone'), cost: 0, description: msg('Remove zoning') },
+  bus_line: { name: msg('Bus Line'), cost: 0, description: msg('Tap road tiles to place stops in order') },
   zone_water: { name: msg('Water Terraform'), cost: 50000, description: msg('Terraform land into water') },
   zone_land: { name: msg('Land Terraform'), cost: 50000, description: msg('Terraform water into land') },
   police_station: { name: msg('Police'), cost: 500, description: msg('Increase safety'), size: 1 },
@@ -177,6 +179,8 @@ export interface GameState {
   cities: City[];
   /** Density chosen in the residential zoning tool */
   selectedZoneDensity?: ResidentialDensity;
+  /** Public transit network and passengers (src/transit) */
+  transit?: TransitState;
 }
 
 export interface SavedCityMeta {

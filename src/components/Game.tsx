@@ -18,6 +18,7 @@ import { useTipSystem } from '@/hooks/useTipSystem';
 import { OverlayMode } from '@/components/game/types';
 import { getOverlayForTool } from '@/components/game/overlays';
 import { OverlayModeToggle } from '@/components/game/OverlayModeToggle';
+import { TransitPanel } from '@/components/game/TransitPanel';
 import { Sidebar } from '@/components/game/Sidebar';
 import {
   BudgetPanel,
@@ -201,6 +202,8 @@ export default function Game({ onExit }: { onExit?: () => void }) {
             
           </div>
           
+          {state.selectedTool === 'bus_line' && <TransitPanel isMobile />}
+
           {/* Mobile Bottom Toolbar */}
           <MobileToolbar 
             onOpenPanel={(panel) => setActivePanel(panel)}
@@ -247,6 +250,7 @@ export default function Game({ onExit }: { onExit?: () => void }) {
               onBargeDelivery={handleBargeDelivery}
             />
             <OverlayModeToggle overlayMode={overlayMode} setOverlayMode={setOverlayMode} />
+            {state.selectedTool === 'bus_line' && <TransitPanel />}
             <MiniMap onNavigate={(x, y) => setNavigationTarget({ x, y })} viewport={viewport} />
             
           </div>
